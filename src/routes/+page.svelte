@@ -1,2 +1,7 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<script>
+  import BumpChart from "$lib/components/BumpChart.svelte";
+</script>
+
+<h1>Bump Chart</h1>
+
+<BumpChart />
