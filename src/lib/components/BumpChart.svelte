@@ -615,14 +615,18 @@
 }
 
 .vis-row {
+  display: flex;
   align-items: flex-start;
 }
 
 .legend-container {
   margin-left: 20px;
+  width: 180px;
   max-height: 800px;
   overflow-y: auto;   
   font-size: 12px;
+  border-left: 1px solid #ddd;
+  padding-left: 10px;
 }
 
 .legend-item {
