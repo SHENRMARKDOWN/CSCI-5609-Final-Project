@@ -5,11 +5,47 @@
   import { get } from "svelte/store";
   import { selectedState, selectedYear } from "$lib/stores";
   import { asset } from "$app/paths";
-
+  let { storyStep = 1 } = $props();
+  
   let svg: SVGSVGElement;
   let selectedRegion = $state("All"); //place holder for selected region, default to "All"
   let originalData = $state([]); // raw data from CSV
   let legendStates = $state([]); // states to show in legend, depends on selected region
+  let lastAppliedStoryStep = -1;
+
+  $effect(() => {
+  if (originalData.length === 0) return;
+  if (storyStep === lastAppliedStoryStep) return;
+
+  lastAppliedStoryStep = storyStep;
+
+  if (storyStep === 1) {
+    selectedRegion = "All";
+    selectedState.set(null);
+    selectedYear.set(2019);
+  }
+
+  if (storyStep === 2) {
+    selectedRegion = "All";
+    selectedState.set(null);
+    selectedYear.set(null);
+  }
+
+
+  if (storyStep === 3) {
+    selectedRegion = "All";
+    selectedState.set(null);
+    selectedYear.set(null);
+  }
+
+  if (storyStep === 4) {
+    selectedRegion = "All";
+    selectedState.set("MS");
+    selectedYear.set(null);
+  }
+
+  redraw();
+});
 
   onMount(() => {
     const unsubscribeState = selectedState.subscribe(() => {

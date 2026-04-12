@@ -1,3 +1,5 @@
+<svelte:options runes={false} />
+
 <script lang="ts">
     // @ts-nocheck
     import { onMount } from "svelte";
@@ -8,7 +10,8 @@
       selectedVis3Mode,
       selectedAgeGroup
     } from "$lib/stores";
-  
+    export let storyStep: number = 8;
+    
     type Vis3Mode = "overall" | "sex" | "race" | "county";
     type AgeGroup = "35+" | "35-64" | "65+";
   
@@ -172,6 +175,7 @@
     let countyColorAssignments: Record<string, string> = {};
     let lastViewKey = "";
     let lastStateForReset: string | null = null;
+    let lastAppliedStoryStep = -1;
   
     function parseRow(d: d3.DSVRowString): Vis3Row {
       return {
@@ -214,7 +218,52 @@
         loading = false;
       }
     });
-  
+    
+    $effect(() => {
+  if (!$selectedState) return;
+  if (loading) return;
+  if (storyStep === lastAppliedStoryStep) return;
+
+  lastAppliedStoryStep = storyStep;
+
+  if (storyStep === 8) {
+    selectedVis3Mode.set("overall");
+    selectedAgeGroup.set("35+");
+    activeSeriesIds = [];
+    countyToAdd = "";
+    tooltip = null;
+    hoveredSeriesId = null;
+    countyColorAssignments = {};
+  }
+
+  if (storyStep === 9) {
+    selectedVis3Mode.set("sex");
+    selectedAgeGroup.set("35-64");
+    countyToAdd = "";
+    tooltip = null;
+    hoveredSeriesId = null;
+    countyColorAssignments = {};
+  }
+
+  if (storyStep === 10) {
+    selectedVis3Mode.set("sex");
+    selectedAgeGroup.set("65+");
+    countyToAdd = "";
+    tooltip = null;
+    hoveredSeriesId = null;
+    countyColorAssignments = {};
+  }
+
+  if (storyStep === 11) {
+    selectedVis3Mode.set("race");
+    selectedAgeGroup.set("35+");
+    countyToAdd = "";
+    tooltip = null;
+    hoveredSeriesId = null;
+    countyColorAssignments = {};
+  }
+});
+
     $: if (!$selectedState) {
       lastStateForReset = null;
     }
