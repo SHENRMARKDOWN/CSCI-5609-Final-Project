@@ -10,7 +10,8 @@
       selectedVis3Mode,
       selectedAgeGroup
     } from "$lib/stores";
-    export let storyStep: number = 8;
+    export let storyStep: number | null = null;
+    export let storyMode: boolean = false;
     
     type Vis3Mode = "overall" | "sex" | "race" | "county";
     type AgeGroup = "35+" | "35-64" | "65+";
@@ -219,50 +220,108 @@
       }
     });
     
-    $effect(() => {
-  if (!$selectedState) return;
-  if (loading) return;
-  if (storyStep === lastAppliedStoryStep) return;
-
-  lastAppliedStoryStep = storyStep;
-
-  if (storyStep === 8) {
-    selectedVis3Mode.set("overall");
-    selectedAgeGroup.set("35+");
-    activeSeriesIds = [];
-    countyToAdd = "";
-    tooltip = null;
-    hoveredSeriesId = null;
-    countyColorAssignments = {};
-  }
-
-  if (storyStep === 9) {
-    selectedVis3Mode.set("sex");
+    $: if (storyMode && storyStep != null && !loading && storyStep !== lastAppliedStoryStep) {
+      lastAppliedStoryStep = storyStep;
+      
+      countyToAdd = "";
+      tooltip = null;
+      hoveredSeriesId = null;
+      countyColorAssignments = {};
+      
+      if (storyStep === 7) {
+        selectedVis3Mode.set("overall");
+        selectedAgeGroup.set("35+");
+        activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
+      } 
+      else if (storyStep === 8) {
+        selectedVis3Mode.set("sex");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = ["sex_overall"];
+      } 
+      else if (storyStep === 9) {
+        selectedVis3Mode.set("sex");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = ["sex_overall", "sex_men"];
+      } 
+      else if (storyStep === 10) {
+        selectedVis3Mode.set("sex");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = ["sex_overall", "sex_men", "sex_women"];
+      } 
+      else if (storyStep === 11) {
+        selectedVis3Mode.set("sex");
+        selectedAgeGroup.set("65+");
+        activeSeriesIds = ["sex_overall"];
+      } 
+      else if (storyStep === 12) {
+        selectedVis3Mode.set("sex");
+        selectedAgeGroup.set("65+");
+        activeSeriesIds = ["sex_overall", "sex_men"];
+      } 
+      else if (storyStep === 13) {
+        selectedVis3Mode.set("sex");
+        selectedAgeGroup.set("65+");
+        activeSeriesIds = ["sex_overall", "sex_men", "sex_women"];
+      } 
+      else if (storyStep === 14) {
+        selectedVis3Mode.set("race");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = ["race_overall"];
+      } 
+      else if (storyStep === 15) {
+        selectedVis3Mode.set("race");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = ["race_overall", "race_white"];
+      } 
+      else if (storyStep === 16) {
+        selectedVis3Mode.set("race");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = ["race_overall", "race_white", "race_black_non_hispanic"];
+      } 
+      else if (storyStep === 17) {
+        selectedVis3Mode.set("race");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic"];
+      } 
+      else if (storyStep === 18) {
+        selectedVis3Mode.set("race");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = [
+          "race_overall",
+          "race_white",
+          "race_black_non_hispanic",
+          "race_hispanic",
+          "race_asian_pacific_islander"
+        ];}
+      else if (storyStep === 19) {
+        selectedVis3Mode.set("race");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = [
+          "race_overall",
+          "race_white",
+          "race_black_non_hispanic",
+          "race_hispanic",
+          "race_asian_pacific_islander",
+      "race_american_indian_alaska_native"
+    ];
+  } 
+  else if (storyStep === 20) {
+    selectedVis3Mode.set("county");
     selectedAgeGroup.set("35-64");
-    countyToAdd = "";
-    tooltip = null;
-    hoveredSeriesId = null;
-    countyColorAssignments = {};
-  }
+    activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
+  } 
+  else if (storyStep >= 21 && storyStep <= 25) {
+    selectedVis3Mode.set("county");
+    selectedAgeGroup.set("35-64");
 
-  if (storyStep === 10) {
-    selectedVis3Mode.set("sex");
-    selectedAgeGroup.set("65+");
-    countyToAdd = "";
-    tooltip = null;
-    hoveredSeriesId = null;
-    countyColorAssignments = {};
-  }
+    const count = storyStep - 20;
+    const countyIds = suggestedCounties.slice(0, count).map((d) => d.id);
 
-  if (storyStep === 11) {
-    selectedVis3Mode.set("race");
-    selectedAgeGroup.set("35+");
-    countyToAdd = "";
-    tooltip = null;
-    hoveredSeriesId = null;
-    countyColorAssignments = {};
+    activeSeriesIds = referenceSeriesId
+      ? [referenceSeriesId, ...countyIds]
+      : countyIds;
   }
-});
+}
 
     $: if (!$selectedState) {
       lastStateForReset = null;
@@ -695,7 +754,12 @@
       hoveredSeriesId = null;
     }
   
-    $: if ($selectedState && seriesMeta.length && currentViewKey !== lastViewKey) {
+    $: if (
+      $selectedState &&
+      seriesMeta.length &&
+      currentViewKey !== lastViewKey &&
+      !storyMode
+    ) {
       lastViewKey = currentViewKey;
       activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
       countyToAdd = "";

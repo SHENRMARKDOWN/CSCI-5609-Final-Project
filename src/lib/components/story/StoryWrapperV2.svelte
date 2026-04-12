@@ -1,10 +1,22 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  //import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { fade, fly, scale } from 'svelte/transition';
-  import StoryBumpChart from '$lib/components/story/StoryBumpChart.svelte';
-  import StoryDetailLinePlot from '$lib/components/story/StoryDetailLinePlot.svelte';
-  import StoryUSStrokeMortalityMap from '$lib/components/story/StoryUSStrokeMortalityMap.svelte';
+  //import StoryBumpChart from '$lib/components/story/StoryBumpChart.svelte';
+  //import StoryDetailLinePlot from '$lib/components/story/StoryDetailLinePlot.svelte';
+  //import StoryUSStrokeMortalityMap from '$lib/components/story/StoryUSStrokeMortalityMap.svelte';
+
+  import BumpChart from '$lib/components/BumpChart.svelte';
+  import DetailLinePlot from '$lib/components/DetailLinePlot.svelte';
+  import USStrokeMortalityMap from '$lib/components/USStrokeMortalityMap.svelte';
+
+  import {
+  selectedState,
+  selectedYear,
+  selectedVis3Mode,
+  selectedAgeGroup} from '$lib/stores';
+
+  let mode: 'story' | 'explore' = 'story'; // NEW
 
   type StorySection = 'vis1' | 'vis2' | 'vis3' | 'user';
   type StoryStep = {
@@ -18,6 +30,10 @@
   let transitionProgress = 0;
   let introEl: HTMLElement;
   let stepEls: HTMLDivElement[] = [];
+
+  $: if (currentStep >= 26) {
+    mode = 'explore';
+  } // NEW
 
   const storySteps: StoryStep[] = [
     {
@@ -254,9 +270,9 @@
     };
   }
 
-  function openDashboard() {
-    goto('/');
-  }
+  //function openDashboard() {
+  // goto('/');
+  //}
 
   function getThemeClass(step: number) {
     if (step >= 1 && step <= 4) return 'theme-vis1';
@@ -316,7 +332,53 @@
     return null;
   }
 
+  function applyStoryState(step: number) {
+  if (mode !== 'story') return;
+
+  // VIS1: BumpChart
+  if (step >= 1 && step <= 4) {
+    if (step === 1) {
+      selectedYear.set(2019);
+      selectedState.set(null);
+    }
+
+    if (step === 2 || step === 3) {
+      selectedYear.set(null);
+      selectedState.set(null);
+    }
+
+    if (step === 4) {
+      selectedYear.set(null);
+      selectedState.set('MS');
+    }
+    return;
+  }
+
+  // VIS2: Map
+  if (step >= 5 && step <= 6) {
+    selectedState.set('MS');
+
+    if (step === 5) {
+      selectedYear.set(2019);
+    }
+
+    if (step === 6) {
+      selectedYear.set(null);
+    }
+    return;
+  }
+
+  // VIS3: DetailLinePlot
+  if (step >= 7 && step <= 25) {
+    selectedState.set('MS');
+    selectedYear.set(2019);
+    return;
+  }
+}
+
   function updateScrollState() {
+    if (mode !== 'story') return;  // NEW
+
     const validStepEls = stepEls.filter(Boolean);
 
     if (validStepEls.length === 0) {
@@ -349,7 +411,12 @@
       stepPositions[activeIndex + 1] ??
       start + Math.max(validStepEls[activeIndex]?.offsetHeight ?? window.innerHeight, window.innerHeight);
 
-    currentStep = storySteps[activeIndex]?.step ?? 0;
+    const nextStep = storySteps[activeIndex]?.step ?? 0;
+    if (nextStep !== currentStep) {
+      applyStoryState(nextStep);
+      currentStep = nextStep;
+    }
+
     transitionProgress = clamp((triggerY - start) / Math.max(end - start, 1));
   }
 
@@ -357,13 +424,14 @@
     let frame = 0;
 
     const scheduleUpdate = () => {
+      if (mode !== 'story') return;
       if (frame) return;
-
+      
       frame = requestAnimationFrame(() => {
         frame = 0;
         updateScrollState();
       });
-    };
+    };// NEW
 
     scheduleUpdate();
     window.addEventListener('scroll', scheduleUpdate, { passive: true });
@@ -375,6 +443,10 @@
       window.removeEventListener('resize', scheduleUpdate);
     };
   });
+  
+  $: if (currentStep >= 26 && mode === 'story') {
+    mode = 'explore';
+    } // NEW
 </script>
 
 <div class={`story-page ${getThemeClass(currentStep)}`}>
@@ -474,39 +546,44 @@
               {/key}
             </div>
 
-            {#key currentStep}
-              <div
-                class="viz-stage"
-                in:fly={{ y: 24, duration: 380 }}
-                out:fade={{ duration: 180 }}
-              >
-                {#if currentStep >= 1 && currentStep <= 4}
-                  <div class="chart-shell" in:fade={{ duration: 320 }}>
-                    <StoryBumpChart storyStep={currentStep} />
-                  </div>
-                {:else if currentStep >= 5 && currentStep <= 6}
-                  <div class="chart-shell" in:fade={{ duration: 320 }}>
-                    <StoryUSStrokeMortalityMap storyStep={currentStep} />
-                  </div>
-                {:else if currentStep >= 7 && currentStep <= 25}
-                  <div class="chart-shell" in:fade={{ duration: 320 }}>
-                    <StoryDetailLinePlot storyStep={currentStep} />
-                  </div>
-                {:else}
-                  <div class="user-mode-card" in:fade={{ duration: 320 }}>
-                    <p class="user-mode-tag">User-Driven Mode</p>
-                    <h4>Explore the dashboard freely</h4>
-                    <p>
-                      The guided narrative is complete. Continue in the free-exploration view to
-                      choose states, years, and subgroup combinations on your own.
-                    </p>
-                    <button class="user-mode-link" type="button" onclick={openDashboard}>
-                      Open User-Driven Dashboard
-                    </button>
-                  </div>
-                {/if}
-              </div>
-            {/key}
+            {#if mode === 'story'}
+  {@const sectionKey =
+    currentStep >= 1 && currentStep <= 4
+      ? 'vis1'
+      : currentStep >= 5 && currentStep <= 6
+        ? 'vis2'
+        : 'vis3'
+  }
+
+  {#key sectionKey}
+    <div
+      class="viz-stage"
+      in:fly={{ y: 24, duration: 380 }}
+      out:fade={{ duration: 180 }}
+    >
+      {#if currentStep >= 1 && currentStep <= 4}
+        <div class="chart-shell" in:fade={{ duration: 320 }}>
+          <BumpChart storyStep={currentStep} storyMode={true} />
+        </div>
+      {:else if currentStep >= 5 && currentStep <= 6}
+        <div class="chart-shell" in:fade={{ duration: 320 }}>
+          <USStrokeMortalityMap />
+        </div>
+      {:else if currentStep >= 7 && currentStep <= 25}
+        <div class="chart-shell" in:fade={{ duration: 320 }}>
+          <DetailLinePlot storyStep={currentStep} storyMode={true} />
+        </div>
+      {/if}
+    </div>
+  {/key}
+{:else}
+  <div class="viz-stage explore-stage">
+
+    <BumpChart storyMode={false} />
+    <USStrokeMortalityMap />
+    <DetailLinePlot storyMode={false} />
+  </div>
+{/if}
           </div>
 
         </div>
@@ -647,7 +724,7 @@
 
   .text-column {
     position: relative;
-    width: 37%;
+    width: 25%;
     box-sizing: border-box;
   }
 
@@ -848,7 +925,7 @@
     position: fixed;
     top: 24px;
     right: 24px;
-    width: calc(63% - 40px);
+    width: calc(75% - 40px);
     height: calc(100vh - 48px);
     box-sizing: border-box;
     z-index: 10;

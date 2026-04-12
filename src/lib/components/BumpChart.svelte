@@ -5,7 +5,7 @@
   import { get } from "svelte/store";
   import { selectedState, selectedYear } from "$lib/stores";
   import { asset } from "$app/paths";
-  let { storyStep = 1 } = $props();
+  let { storyStep = null, storyMode = false } = $props();
   
   let svg: SVGSVGElement;
   let selectedRegion = $state("All"); //place holder for selected region, default to "All"
@@ -14,6 +14,8 @@
   let lastAppliedStoryStep = -1;
 
   $effect(() => {
+  if (!storyMode) return;
+  if (storyStep == null) return;
   if (originalData.length === 0) return;
   if (storyStep === lastAppliedStoryStep) return;
 
@@ -31,7 +33,6 @@
     selectedYear.set(null);
   }
 
-
   if (storyStep === 3) {
     selectedRegion = "All";
     selectedState.set(null);
@@ -46,6 +47,8 @@
 
   redraw();
 });
+
+
 
   onMount(() => {
     const unsubscribeState = selectedState.subscribe(() => {
@@ -289,6 +292,11 @@
       .domain([maxRank, 1])
       .range([height - margin.bottom, margin.top]); // adjust for top margin
 
+    const barX = d3
+    .scaleLinear()
+    .domain([0, d3.max(data, d => d.mortality) ?? 200])
+    .range([margin.left, width - margin.right]);
+
     const xAxis = d3
       .axisBottom(x)
       .tickValues(d3.range(yearExtent[0], yearExtent[1] + 1))
@@ -434,10 +442,21 @@
               .append("rect")
               .attr("x", margin.left)
               .attr("y", y(yearData.rank) - 6)
-              .attr("width", width - margin.left - margin.right)
+              .attr("width", barX(yearData.mortality) - margin.left)
               .attr("height", 12)
               .attr("fill", getStateColor(state))
               .attr("opacity", 1);
+
+              svgEl
+              .append("text")
+              .attr("x", barX(yearData.mortality) - 6)   
+              .attr("y", y(yearData.rank))
+              .attr("dy", "0.35em")
+              .attr("text-anchor", "end")              
+              .attr("font-size", "10px")
+              .attr("fill", "white")                  
+              .attr("font-weight", "600")
+              .text(d3.format(".1f")(yearData.mortality));
             }
         }
           
