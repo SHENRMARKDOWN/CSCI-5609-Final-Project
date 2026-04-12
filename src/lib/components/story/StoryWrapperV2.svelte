@@ -9,6 +9,7 @@
   import BumpChart from '$lib/components/BumpChart.svelte';
   import DetailLinePlot from '$lib/components/DetailLinePlot.svelte';
   import USStrokeMortalityMap from '$lib/components/USStrokeMortalityMap.svelte';
+  import USStrokeMortalityMapV2 from "$lib/components/USStrokeMortalityMapV2.svelte";
 
   import {
   selectedState,
@@ -567,7 +568,7 @@
         </div>
       {:else if currentStep >= 5 && currentStep <= 6}
         <div class="chart-shell" in:fade={{ duration: 320 }}>
-          <USStrokeMortalityMap />
+          <USStrokeMortalityMapV2 storyStep={currentStep} storyMode={true} />
         </div>
       {:else if currentStep >= 7 && currentStep <= 25}
         <div class="chart-shell" in:fade={{ duration: 320 }}>
@@ -580,7 +581,7 @@
   <div class="viz-stage explore-stage">
 
     <BumpChart storyMode={false} />
-    <USStrokeMortalityMap />
+    <USStrokeMortalityMapV2 storyStep={currentStep} storyMode={true} />
     <DetailLinePlot storyMode={false} />
   </div>
 {/if}
