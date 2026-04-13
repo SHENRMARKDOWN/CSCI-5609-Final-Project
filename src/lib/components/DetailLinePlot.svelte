@@ -3,7 +3,6 @@
 <script lang="ts">
     // @ts-nocheck
     import { onDestroy, onMount } from "svelte";
-    import { draw } from "svelte/transition";
     import * as d3 from "d3";
     import { asset } from "$app/paths";
     import {
@@ -96,6 +95,9 @@
     const MUTED_TEXT_COLOR = "#666";
     const INACTIVE_COUNTY_COLOR = "#c7c7c7";
     const ACTIVE_COUNTY_PALETTE = ["#4e79a7", "#e15759", "#59a14f", "#f28e2b", "#76b7b2"];
+    const STORY_LINE_DRAW_MS = 1180;
+    const STORY_LINE_STAGGER_MS = 1100;
+    const STORY_LINE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
   
     const STATE_NAMES: Record<string, string> = {
       AL: "Alabama",
@@ -190,6 +192,21 @@
       clearStoryTimers();
     });
 
+    function buildRevealSequence(baseIds: string[], idsToAdd: string[], stagger = STORY_LINE_STAGGER_MS) {
+      const stableBaseIds = Array.from(new Set(baseIds.filter(Boolean)));
+      const revealIds = idsToAdd.filter((id) => id && !stableBaseIds.includes(id));
+      const steps = [stableBaseIds];
+
+      revealIds.forEach((_, index) => {
+        steps.push([...stableBaseIds, ...revealIds.slice(0, index + 1)]);
+      });
+
+      return steps.map((ids, index) => ({
+        ids,
+        delay: index * stagger
+      }));
+    }
+
     function parseRow(d: d3.DSVRowString): Vis3Row {
       return {
         state: d.state,
@@ -244,12 +261,18 @@
 
       function animateIn(steps: { ids: string[]; delay: number }[]) {
         steps.forEach(({ ids, delay }) => {
-          const timerId = window.setTimeout(() => {
+          const runStep = () => {
             const prev = new Set(activeSeriesIds);
             activeSeriesIds = ids;
             newlyAddedIds = new Set(ids.filter((id) => !prev.has(id)));
-          }, delay);
+          };
 
+          if (delay <= 0) {
+            runStep();
+            return;
+          }
+
+          const timerId = window.setTimeout(runStep, delay);
           storyTimers.push(timerId);
         });
       }
@@ -262,11 +285,9 @@
       } else if (storyStep === 8) {
         selectedVis3Mode.set("sex");
         selectedAgeGroup.set("35-64");
-        animateIn([
-          { ids: ["sex_overall"], delay: 0 },
-          { ids: ["sex_overall", "sex_men"], delay: 900 },
-          { ids: ["sex_overall", "sex_men", "sex_women"], delay: 1800 }
-        ]);
+        animateIn(
+          buildRevealSequence(["sex_overall"], ["sex_men", "sex_women"])
+        );
       } else if (storyStep === 9) {
         selectedVis3Mode.set("race");
         selectedAgeGroup.set("35-64");
@@ -275,14 +296,18 @@
       } else if (storyStep === 10) {
         selectedVis3Mode.set("race");
         selectedAgeGroup.set("35-64");
-        animateIn([
-          { ids: ["race_overall"], delay: 0 },
-          { ids: ["race_overall", "race_white"], delay: 700 },
-          { ids: ["race_overall", "race_white", "race_black_non_hispanic"], delay: 1400 },
-          { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic"], delay: 2100 },
-          { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic", "race_asian_pacific_islander"], delay: 2800 },
-          { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic", "race_asian_pacific_islander", "race_american_indian_alaska_native"], delay: 3500 }
-        ]);
+        animateIn(
+          buildRevealSequence(
+            ["race_overall"],
+            [
+              "race_white",
+              "race_black_non_hispanic",
+              "race_hispanic",
+              "race_asian_pacific_islander",
+              "race_american_indian_alaska_native"
+            ]
+          )
+        );
       } else if (storyStep === 11) {
         selectedVis3Mode.set("county");
         selectedAgeGroup.set("35-64");
@@ -298,12 +323,7 @@
 
         countyIds.forEach((id) => assignCountyColor(id));
 
-        const steps = [
-          base,
-          ...countyIds.map((_, index) => [...base, ...countyIds.slice(0, index + 1)])
-        ];
-
-        animateIn(steps.map((ids, index) => ({ ids, delay: index * 700 })));
+        animateIn(buildRevealSequence(base, countyIds));
       }
     }
 
@@ -741,23 +761,29 @@
 
 function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
   if (!shouldAnimate) return {};
+
   const originalDash = node.getAttribute("stroke-dasharray") || "";
   const length = node.getTotalLength();
   node.style.strokeDasharray = String(length);
   node.style.strokeDashoffset = String(length);
+  node.style.opacity = "0.24";
   node.style.transition = "none";
+
   requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    node.style.transition = "stroke-dashoffset 900ms cubic-bezier(0.4, 0, 0.2, 1)";
-    node.style.strokeDashoffset = "0";
+    requestAnimationFrame(() => {
+      node.style.transition = `stroke-dashoffset ${STORY_LINE_DRAW_MS}ms ${STORY_LINE_EASE}, opacity 280ms ease`;
+      node.style.strokeDashoffset = "0";
+      node.style.opacity = "";
+    });
   });
-});
 
   const onEnd = () => {
     node.style.transition = "";
     node.style.strokeDasharray = originalDash;
     node.style.strokeDashoffset = "";
+    node.style.opacity = "";
   };
+
   node.addEventListener("transitionend", onEnd, { once: true });
   return {
     destroy() {
@@ -765,6 +791,7 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       node.style.transition = "";
       node.style.strokeDasharray = originalDash;
       node.style.strokeDashoffset = "";
+      node.style.opacity = "";
     }
   };
 }
@@ -1802,6 +1829,16 @@ function getDirectLabelWeight(id: string) {
       border: 1px solid #efefef;
       border-radius: 12px;
       background: #fff;
+    }
+
+    .chart-svg path,
+    .chart-svg circle,
+    .chart-svg text {
+      transition:
+        opacity 220ms ease,
+        stroke-width 240ms ease,
+        fill 220ms ease,
+        stroke 220ms ease;
     }
   
     .tooltip {
