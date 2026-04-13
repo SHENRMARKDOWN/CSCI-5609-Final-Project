@@ -32,7 +32,8 @@
   let introEl: HTMLElement;
   let stepEls: HTMLDivElement[] = [];
   let textColumnEl: HTMLDivElement;
-  let exploding = false; 
+  let exploding = false;
+  let introHidden = false;
 
   $: if (currentStep >= 13) {
     mode = 'explore';
@@ -277,6 +278,7 @@
 
   function updateScrollState() {
   if (mode !== 'story') return;
+  if (currentStep === 0) return;
 
   const validStepEls = stepEls.filter(Boolean);
   if (validStepEls.length === 0) {
@@ -323,6 +325,7 @@ exploding = scrollTop + viewH > lastStepBottom + 80;
 }
 
 onMount(() => {
+  window.scrollTo(0, 0);
   let frame = 0;
 
   const scheduleUpdate = () => {
@@ -335,13 +338,15 @@ onMount(() => {
   };
   
   const handleWindowScroll = () => {
-    if (mode !== 'story') return;
-    if (currentStep === 0 && window.scrollY > 60) {
-      currentStep = 1;
-      applyStoryState(1);
-      window.removeEventListener('scroll', handleWindowScroll);
-    }
-  };
+  if (mode !== 'story') return;
+  if (currentStep === 0 && window.scrollY > 60) {
+    currentStep = 1;
+    applyStoryState(1);
+    // Delay hiding intro until story-body has faded in
+    setTimeout(() => { introHidden = true; }, 400);
+    window.removeEventListener('scroll', handleWindowScroll);
+  }
+};
   
   scheduleUpdate();
   textColumnEl?.addEventListener('scroll', scheduleUpdate, { passive: true });
@@ -364,7 +369,7 @@ onMount(() => {
     </div>
   {/if}
 
-  <section class="intro-section" class:hidden={currentStep > 0} data-step="0" bind:this={introEl}>
+  <section class="intro-section" class:hidden={introHidden}  data-step="0" bind:this={introEl}>
     <div class="intro-box">
       <p class="eyebrow" in:fade={{ duration: 420, delay: 80 }}>
         Author-Driven Story
@@ -382,7 +387,7 @@ onMount(() => {
     </div>
   </section>
 
-  <div class="story-body" class:exploding>
+  <div class="story-body" class:exploding class:active={currentStep > 0}>
   <div class="text-column" bind:this={textColumnEl}>
     {#if currentStep > 0}
       {@const activeStoryStep = storySteps[currentStep - 1]}
@@ -553,9 +558,10 @@ onMount(() => {
   padding: 24px;
   box-sizing: border-box;
   z-index: 20;
-  pointer-events: none;
+  pointer-events: auto;
   transition: opacity 400ms ease;
-}.intro-section.hidden {
+}
+.intro-section.hidden {
   opacity: 0;
   pointer-events: none;
 }
@@ -616,7 +622,15 @@ onMount(() => {
   height: 100vh;
   display: flex;
   z-index: 1;
-  transition: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+
+.story-body.active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 15;
 }
 
 .text-column {
