@@ -162,6 +162,11 @@
     const cx = c.x + oX, cy = c.y + oY;
     return cx >= $boxX && cx <= $boxX + boxW && cy >= $boxY && cy <= $boxY + boxH;
   })
+  .sort((a, b) => {
+    const ma = mortMap.get(a.code) ?? Number.POSITIVE_INFINITY;
+    const mb = mortMap.get(b.code) ?? Number.POSITIVE_INFINITY;
+    return d3.ascending(ma, mb) || d3.ascending(a.code, b.code);
+  });
 
   $: panelPos = (() => {
     const tileCell = 68, tileGap = 5, tileStep = tileCell + tileGap;
