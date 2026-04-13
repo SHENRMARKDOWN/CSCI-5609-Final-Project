@@ -2,7 +2,7 @@
 
 <script lang="ts">
     // @ts-nocheck
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { draw } from "svelte/transition";
     import * as d3 from "d3";
     import { asset } from "$app/paths";
@@ -179,8 +179,17 @@
     let lastStateForReset: string | null = null;
     let lastAppliedStoryStep = -1;
     let newlyAddedIds = new Set<string>();
+    let storyTimers: number[] = [];
 
-      
+    function clearStoryTimers() {
+      storyTimers.forEach((timerId) => window.clearTimeout(timerId));
+      storyTimers = [];
+    }
+
+    onDestroy(() => {
+      clearStoryTimers();
+    });
+
     function parseRow(d: d3.DSVRowString): Vis3Row {
       return {
         state: d.state,
@@ -224,74 +233,79 @@
     });
     
     $: if (storyMode && storyStep != null && !loading && storyStep !== lastAppliedStoryStep) {
-  lastAppliedStoryStep = storyStep;
+      clearStoryTimers();
 
-  countyToAdd = "";
-  tooltip = null;
-  hoveredSeriesId = null;
-  countyColorAssignments = {};
-  newlyAddedIds = new Set();
+      lastAppliedStoryStep = storyStep;
+      countyToAdd = "";
+      tooltip = null;
+      hoveredSeriesId = null;
+      countyColorAssignments = {};
+      newlyAddedIds = new Set();
 
-  function animateIn(steps: { ids: string[]; delay: number }[]) {
-    steps.forEach(({ ids, delay }) => {
-      setTimeout(() => {
-        const prev = new Set(activeSeriesIds);
-        activeSeriesIds = ids;
-        newlyAddedIds = new Set(ids.filter((id) => !prev.has(id)));
-      }, delay);
-    });
-  }
+      function animateIn(steps: { ids: string[]; delay: number }[]) {
+        steps.forEach(({ ids, delay }) => {
+          const timerId = window.setTimeout(() => {
+            const prev = new Set(activeSeriesIds);
+            activeSeriesIds = ids;
+            newlyAddedIds = new Set(ids.filter((id) => !prev.has(id)));
+          }, delay);
 
-  if (storyStep === 7) {
-    selectedVis3Mode.set("overall");
-    selectedAgeGroup.set("35+");
-    activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
-    newlyAddedIds = new Set(activeSeriesIds);
-  }
-  else if (storyStep === 8) {
-    selectedVis3Mode.set("sex");
-    selectedAgeGroup.set("35-64");
-    animateIn([
-      { ids: ["sex_overall"], delay: 0 },
-      { ids: ["sex_overall", "sex_men"], delay: 900 },
-      { ids: ["sex_overall", "sex_men", "sex_women"], delay: 1800 },
-    ]);
-  }
-  else if (storyStep === 9) {
-    selectedVis3Mode.set("race");
-    selectedAgeGroup.set("35-64");
-    activeSeriesIds = ["race_overall"];
-    newlyAddedIds = new Set(["race_overall"]);
-  }
-  else if (storyStep === 10) {
-    selectedVis3Mode.set("race");
-    selectedAgeGroup.set("35-64");
-    animateIn([
-      { ids: ["race_overall"], delay: 0 },
-      { ids: ["race_overall", "race_white"], delay: 700 },
-      { ids: ["race_overall", "race_white", "race_black_non_hispanic"], delay: 1400 },
-      { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic"], delay: 2100 },
-      { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic", "race_asian_pacific_islander"], delay: 2800 },
-      { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic", "race_asian_pacific_islander", "race_american_indian_alaska_native"], delay: 3500 },
-    ]);
-  }
-  else if (storyStep === 11) {
-    selectedVis3Mode.set("county");
-    selectedAgeGroup.set("35-64");
-    activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
-    newlyAddedIds = new Set(activeSeriesIds);
-  }
-  else if (storyStep === 12) {
-    selectedVis3Mode.set("county");
-    selectedAgeGroup.set("35-64");
-    const base = referenceSeriesId ? [referenceSeriesId] : [];
-    const steps = [base, ...Array.from({ length: 5 }, (_, i) => [
-      ...base,
-      ...suggestedCounties.slice(0, i + 1).map((d) => d.id)
-    ])];
-    animateIn(steps.map((ids, i) => ({ ids, delay: i * 700 })));
-  }
-}
+          storyTimers.push(timerId);
+        });
+      }
+
+      if (storyStep === 7) {
+        selectedVis3Mode.set("overall");
+        selectedAgeGroup.set("35+");
+        activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
+        newlyAddedIds = new Set(activeSeriesIds);
+      } else if (storyStep === 8) {
+        selectedVis3Mode.set("sex");
+        selectedAgeGroup.set("35-64");
+        animateIn([
+          { ids: ["sex_overall"], delay: 0 },
+          { ids: ["sex_overall", "sex_men"], delay: 900 },
+          { ids: ["sex_overall", "sex_men", "sex_women"], delay: 1800 }
+        ]);
+      } else if (storyStep === 9) {
+        selectedVis3Mode.set("race");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = ["race_overall"];
+        newlyAddedIds = new Set(["race_overall"]);
+      } else if (storyStep === 10) {
+        selectedVis3Mode.set("race");
+        selectedAgeGroup.set("35-64");
+        animateIn([
+          { ids: ["race_overall"], delay: 0 },
+          { ids: ["race_overall", "race_white"], delay: 700 },
+          { ids: ["race_overall", "race_white", "race_black_non_hispanic"], delay: 1400 },
+          { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic"], delay: 2100 },
+          { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic", "race_asian_pacific_islander"], delay: 2800 },
+          { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic", "race_asian_pacific_islander", "race_american_indian_alaska_native"], delay: 3500 }
+        ]);
+      } else if (storyStep === 11) {
+        selectedVis3Mode.set("county");
+        selectedAgeGroup.set("35-64");
+        activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
+        countyColorAssignments = {};
+        newlyAddedIds = new Set(activeSeriesIds);
+      } else if (storyStep === 12) {
+        selectedVis3Mode.set("county");
+        selectedAgeGroup.set("35-64");
+
+        const base = referenceSeriesId ? [referenceSeriesId] : [];
+        const countyIds = suggestedCounties.slice(0, 5).map((d) => d.id);
+
+        countyIds.forEach((id) => assignCountyColor(id));
+
+        const steps = [
+          base,
+          ...countyIds.map((_, index) => [...base, ...countyIds.slice(0, index + 1)])
+        ];
+
+        animateIn(steps.map((ids, index) => ({ ids, delay: index * 700 })));
+      }
+    }
 
     $: if (!$selectedState) {
       lastStateForReset = null;
@@ -380,11 +394,13 @@
     }
   
     function resetComparison() {
+      clearStoryTimers();
       activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
       countyToAdd = "";
       tooltip = null;
       hoveredSeriesId = null;
       countyColorAssignments = {};
+      newlyAddedIds = new Set(activeSeriesIds);
     }
   
     function toggleSeries(id: string) {
@@ -392,8 +408,11 @@
   
       if (activeSeriesIds.includes(id)) {
         activeSeriesIds = activeSeriesIds.filter((d) => d !== id);
+        newlyAddedIds = new Set();
       } else {
         activeSeriesIds = [...activeSeriesIds, id];
+        hoveredSeriesId = id;
+        newlyAddedIds = new Set([id]);
       }
   
       tooltip = null;
@@ -421,6 +440,8 @@
         : [...currentCountyIds, id];
   
       countyToAdd = "";
+      hoveredSeriesId = id;
+      newlyAddedIds = new Set([id]);
       tooltip = null;
     }
   
@@ -430,6 +451,8 @@
       if (activeSeriesIds.includes(id)) {
         activeSeriesIds = activeSeriesIds.filter((d) => d !== id);
         removeCountyColor(id);
+        hoveredSeriesId = null;
+        newlyAddedIds = new Set();
       } else {
         addCounty(id);
       }
@@ -442,6 +465,8 @@
   
       activeSeriesIds = activeSeriesIds.filter((d) => d !== id);
       removeCountyColor(id);
+      hoveredSeriesId = null;
+      newlyAddedIds = new Set();
       tooltip = null;
     }
   
@@ -508,6 +533,30 @@
     }
   
     function getStrokeWidth(series: SeriesMeta) {
+      if ($selectedVis3Mode === "county") {
+        if (series.id === referenceSeriesId || series.type === "state_average") {
+          return hoveredSeriesId === series.id ? 3.2 : 2.8;
+        }
+
+        if (series.id === countyFocusId) {
+          return hoveredSeriesId === series.id ? 4.2 : 3.6;
+        }
+
+        return hoveredSeriesId ? 1.8 : 1.9;
+      }
+
+      if ($selectedVis3Mode === "race") {
+        if (series.id === referenceSeriesId) {
+          return hoveredSeriesId === series.id ? 3.2 : 2.8;
+        }
+
+        if (series.id === raceFocusId) {
+          return hoveredSeriesId === series.id ? 4.1 : 3.5;
+        }
+
+        return hoveredSeriesId ? 1.9 : 2.05;
+      }
+
       let width = 2.8;
   
       if ($selectedVis3Mode === "overall" && series.id === referenceSeriesId) {
@@ -534,9 +583,44 @@
     }
   
     function getSeriesOpacity(series: SeriesMeta) {
+      if ($selectedVis3Mode === "county") {
+        if (!activeCountyIds.length) {
+          return series.id === referenceSeriesId ? 0.88 : 0.5;
+        }
+
+        if (hoveredSeriesId) {
+          if (series.id === hoveredSeriesId) return 1;
+          if (series.id === referenceSeriesId) {
+            return hoveredSeriesId === referenceSeriesId ? 0.96 : 0.54;
+          }
+          return 0.22;
+        }
+
+        if (series.id === countyFocusId) return 0.98;
+        if (series.id === referenceSeriesId) return 0.66;
+        return 0.28;
+      }
+
+      if ($selectedVis3Mode === "race") {
+        if (!activeRaceIds.length) {
+          return series.id === referenceSeriesId ? 0.9 : 0.5;
+        }
+
+        if (hoveredSeriesId) {
+          if (series.id === hoveredSeriesId) return 1;
+          if (series.id === referenceSeriesId) {
+            return hoveredSeriesId === referenceSeriesId ? 0.96 : 0.58;
+          }
+          return 0.18;
+        }
+
+        if (series.id === raceFocusId) return 0.98;
+        if (series.id === referenceSeriesId) return 0.7;
+        return activeRaceIds.length <= 1 ? 0.96 : 0.3;
+      }
+
       if (visibleSeries.length <= 1 || !hoveredSeriesId) {
         if (series.id === referenceSeriesId && $selectedVis3Mode !== "overall") return 0.78;
-        if ($selectedVis3Mode === "county") return 0.84;
         return 0.97;
       }
   
@@ -546,8 +630,43 @@
     }
   
     function getPointOpacity(series: SeriesMeta) {
+      if ($selectedVis3Mode === "county") {
+        if (!activeCountyIds.length) {
+          return series.id === referenceSeriesId ? 0.72 : 0.32;
+        }
+
+        if (hoveredSeriesId) {
+          if (series.id === hoveredSeriesId) return 1;
+          if (series.id === referenceSeriesId) {
+            return hoveredSeriesId === referenceSeriesId ? 0.82 : 0.34;
+          }
+          return 0.1;
+        }
+
+        if (series.id === countyFocusId) return 0.9;
+        if (series.id === referenceSeriesId) return 0.44;
+        return 0.12;
+      }
+
+      if ($selectedVis3Mode === "race") {
+        if (!activeRaceIds.length) {
+          return series.id === referenceSeriesId ? 0.78 : 0.32;
+        }
+
+        if (hoveredSeriesId) {
+          if (series.id === hoveredSeriesId) return 1;
+          if (series.id === referenceSeriesId) {
+            return hoveredSeriesId === referenceSeriesId ? 0.84 : 0.36;
+          }
+          return 0.08;
+        }
+
+        if (series.id === raceFocusId) return 0.92;
+        if (series.id === referenceSeriesId) return 0.5;
+        return activeRaceIds.length <= 1 ? 0.9 : 0.14;
+      }
+
       if (visibleSeries.length <= 1 || !hoveredSeriesId) {
-        if ($selectedVis3Mode === "county" && series.id !== referenceSeriesId) return 0.55;
         if (series.id === referenceSeriesId && $selectedVis3Mode !== "overall") return 0.62;
         return 0.88;
       }
@@ -558,6 +677,20 @@
     }
   
     function getPointRadius(series: SeriesMeta) {
+      if ($selectedVis3Mode === "county") {
+        if (series.id === referenceSeriesId) return hoveredSeriesId === series.id ? 3.6 : 3.1;
+        if (series.id === countyFocusId || hoveredSeriesId === series.id) return 3.7;
+        return 1.8;
+      }
+
+      if ($selectedVis3Mode === "race") {
+        if (series.id === referenceSeriesId) {
+          return hoveredSeriesId === series.id ? 3.6 : 3.1;
+        }
+        if (series.id === raceFocusId || hoveredSeriesId === series.id) return 3.8;
+        return 2;
+      }
+
       if ($selectedVis3Mode === "overall" && series.id === referenceSeriesId) return 4;
       if (hoveredSeriesId === series.id) return 4;
       return series.type === "county" ? 2.4 : 2.8;
@@ -634,6 +767,56 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       node.style.strokeDashoffset = "";
     }
   };
+}
+
+function getDirectConnectorOpacity(id: string) {
+  if ($selectedVis3Mode === "race") {
+    if (!activeRaceIds.length) return id === referenceSeriesId ? 0.72 : 0.84;
+
+    if (hoveredSeriesId) {
+      if (id === hoveredSeriesId) return 0.78;
+      if (id === referenceSeriesId) {
+        return hoveredSeriesId === referenceSeriesId ? 0.74 : 0.42;
+      }
+      return 0.14;
+    }
+
+    if (id === raceFocusId) return 0.76;
+    if (id === referenceSeriesId) return 0.52;
+    return activeRaceIds.length <= 1 ? 0.76 : 0.22;
+  }
+
+  return hoveredSeriesId && hoveredSeriesId !== id ? 0.18 : 0.72;
+}
+
+function getDirectLabelOpacity(id: string) {
+  if ($selectedVis3Mode === "race") {
+    if (!activeRaceIds.length) return id === referenceSeriesId ? 0.9 : 1;
+
+    if (hoveredSeriesId) {
+      if (id === hoveredSeriesId) return 1;
+      if (id === referenceSeriesId) {
+        return hoveredSeriesId === referenceSeriesId ? 0.96 : 0.56;
+      }
+      return 0.18;
+    }
+
+    if (id === raceFocusId) return 1;
+    if (id === referenceSeriesId) return 0.72;
+    return activeRaceIds.length <= 1 ? 1 : 0.34;
+  }
+
+  return hoveredSeriesId && hoveredSeriesId !== id ? 0.18 : 1;
+}
+
+function getDirectLabelWeight(id: string) {
+  if ($selectedVis3Mode === "race") {
+    if (hoveredSeriesId === id) return "700";
+    if (!hoveredSeriesId && id === raceFocusId) return "700";
+    return "600";
+  }
+
+  return hoveredSeriesId === id ? "700" : "600";
 }
   
     function buildEndLabels(seriesList: SeriesMeta[]): EndLabel[] {
@@ -746,12 +929,14 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
     $: currentViewKey = `${$selectedState ?? "none"}|${$selectedVis3Mode}|${$selectedAgeGroup}`;
   
     $: if (!$selectedState) {
+      clearStoryTimers();
       activeSeriesIds = [];
       countyToAdd = "";
       countyColorAssignments = {};
       lastViewKey = "";
       tooltip = null;
       hoveredSeriesId = null;
+      newlyAddedIds = new Set();
     }
   
     $: if (
@@ -760,16 +945,25 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       currentViewKey !== lastViewKey &&
       !storyMode
     ) {
+      clearStoryTimers();
       lastViewKey = currentViewKey;
       activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
       countyToAdd = "";
       countyColorAssignments = {};
       tooltip = null;
       hoveredSeriesId = null;
+      newlyAddedIds = new Set(activeSeriesIds);
     }
   
-    $: activeCountyIds = activeSeriesIds.filter((d) => d !== referenceSeriesId);
+    $: activeCountyIds =
+      $selectedVis3Mode === "county"
+        ? activeSeriesIds.filter((d) => d !== referenceSeriesId)
+        : [];
     $: countyLimitReached = activeCountyIds.length >= MAX_VISIBLE_COUNTIES;
+    $: activeRaceIds =
+      $selectedVis3Mode === "race"
+        ? activeSeriesIds.filter((d) => d !== referenceSeriesId)
+        : [];
   
     $: seriesById = new Map(seriesMeta.map((d) => [d.id, d]));
     $: activeCountySeries = activeCountyIds
@@ -787,6 +981,46 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
         : seriesMeta.filter(
             (d) => d.id === referenceSeriesId || activeSeriesIds.includes(d.id)
           );
+
+    $: countyFocusId =
+      $selectedVis3Mode !== "county"
+        ? null
+        : hoveredSeriesId &&
+            hoveredSeriesId !== referenceSeriesId &&
+            activeCountyIds.includes(hoveredSeriesId)
+          ? hoveredSeriesId
+          : [...newlyAddedIds].find(
+              (id) => id !== referenceSeriesId && activeCountyIds.includes(id)
+            ) ?? activeCountyIds[activeCountyIds.length - 1] ?? null;
+
+    $: raceFocusId =
+      $selectedVis3Mode !== "race"
+        ? null
+        : hoveredSeriesId &&
+            hoveredSeriesId !== referenceSeriesId &&
+            activeRaceIds.includes(hoveredSeriesId)
+          ? hoveredSeriesId
+          : [...newlyAddedIds].find(
+              (id) => id !== referenceSeriesId && activeRaceIds.includes(id)
+            ) ?? activeRaceIds[activeRaceIds.length - 1] ?? null;
+
+    $: comparisonFocusId =
+      $selectedVis3Mode === "county"
+        ? countyFocusId
+        : $selectedVis3Mode === "race"
+          ? raceFocusId
+          : null;
+
+    $: chartSeries =
+      ($selectedVis3Mode === "county" || $selectedVis3Mode === "race") && visibleSeries.length
+        ? [
+            ...visibleSeries.filter((d) => d.id === referenceSeriesId),
+            ...visibleSeries.filter(
+              (d) => d.id !== referenceSeriesId && d.id !== comparisonFocusId
+            ),
+            ...visibleSeries.filter((d) => d.id === comparisonFocusId)
+          ]
+        : visibleSeries;
   
     $: visiblePoints = visibleSeries.flatMap((series) => series.validPoints);
   
@@ -843,8 +1077,10 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       : $selectedVis3Mode === "overall"
         ? `Official state-level trend for adults 35+ in ${stateName}. Unit: per 100,000.`
         : $selectedVis3Mode === "county"
-          ? `County comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state average. Unit: per 100,000.`
-          : `${modeLabel} comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state baseline. Unit: per 100,000.`;
+          ? `County comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state average, and one county is emphasized at a time. Unit: per 100,000.`
+          : $selectedVis3Mode === "race"
+            ? `Race comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state baseline, and one race subgroup is emphasized at a time. Unit: per 100,000.`
+            : `${modeLabel} comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state baseline. Unit: per 100,000.`;
   
     $: yTickFormat =
       (yMax ?? 0) - (yMin ?? 0) < 20 ? d3.format(".1f") : d3.format(".0f");
@@ -853,8 +1089,10 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       $selectedVis3Mode === "overall"
         ? "Higher lines indicate higher stroke mortality per 100,000. The highlighted line is the official state-level rate."
         : $selectedVis3Mode === "county"
-          ? "The dashed gray line shows the state average for the selected age group. Compare only a few counties at a time to preserve readability. Breaks in a line indicate missing yearly values."
-          : "The dashed gray line shows the selected state's baseline for the current age group. Solid colored lines show subgroup trends. Breaks in a line indicate missing yearly values.";
+          ? "The dashed gray line shows the state average for the selected age group. The newest or hovered county stays emphasized, while the other counties remain muted for context. Breaks in a line indicate missing yearly values."
+          : $selectedVis3Mode === "race"
+            ? "The dashed gray line shows the selected state's baseline for the current age group. The newest or hovered race subgroup stays emphasized, while the other race lines remain muted for context. Breaks in a line indicate missing yearly values."
+            : "The dashed gray line shows the selected state's baseline for the current age group. Solid colored lines show subgroup trends. Breaks in a line indicate missing yearly values.";
   
     $: directLabels = buildEndLabels(visibleSeries);
   
@@ -1017,13 +1255,21 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       {#if $selectedVis3Mode === "sex" || $selectedVis3Mode === "race"}
         <div class="legend-panel">
           <div class="legend-title">
-            Click subgroup labels to add or remove comparison lines. The dashed gray line remains as the state baseline.
+            {$selectedVis3Mode === "race"
+              ? "Click subgroup labels to add or remove comparison lines. The dashed gray line remains as the state baseline, and the newest or hovered race subgroup is emphasized."
+              : "Click subgroup labels to add or remove comparison lines. The dashed gray line remains as the state baseline."}
           </div>
   
           <div class="reference-note">
             <span class="line-swatch baseline"></span>
             <span>State baseline</span>
           </div>
+
+          {#if $selectedVis3Mode === "race" && activeRaceIds.length > 1}
+            <div class="focus-hint">
+              The newest race line stays highlighted. Hover a subgroup label or line to bring that subgroup forward.
+            </div>
+          {/if}
   
           <div class="legend-items">
             {#each subgroupLegendItems as item (item.id)}
@@ -1031,6 +1277,7 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
                 type="button"
                 aria-pressed={activeSeriesIds.includes(item.id)}
                 class:selected={activeSeriesIds.includes(item.id)}
+                class:focus-chip={$selectedVis3Mode === "race" && raceFocusId === item.id}
                 class="legend-chip"
                 onmouseenter={() => setHoveredSeries(item.id)}
                 onmouseleave={() => setHoveredSeries(null)}
@@ -1047,7 +1294,7 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       {#if $selectedVis3Mode === "county"}
         <div class="legend-panel">
           <div class="legend-title">
-            Add up to {MAX_VISIBLE_COUNTIES} counties. The dashed gray line remains as the state average for the selected age group.
+            Add up to {MAX_VISIBLE_COUNTIES} counties. The dashed gray line remains as the state average for the selected age group, and the newest or hovered county is emphasized.
           </div>
   
           <div class="reference-note">
@@ -1087,6 +1334,12 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
               — remove one county to add another.
             {/if}
           </div>
+
+          {#if activeCountyIds.length > 1}
+            <div class="focus-hint">
+              The newest county stays highlighted. Hover a county chip or line to bring that county forward.
+            </div>
+          {/if}
   
           <div class="suggestion-block">
             <span class="control-label">Suggested counties</span>
@@ -1096,6 +1349,7 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
                   type="button"
                   aria-pressed={activeSeriesIds.includes(county.id)}
                   class:selected={activeSeriesIds.includes(county.id)}
+                  class:focus-chip={countyFocusId === county.id}
                   class="legend-chip"
                   onmouseenter={() => setHoveredSeries(county.id)}
                   onmouseleave={() => setHoveredSeries(null)}
@@ -1116,6 +1370,7 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
                 {#each activeCountySeries as county (county.id)}
                   <button
                     type="button"
+                    class:focus-chip={countyFocusId === county.id}
                     class="legend-chip selected"
                     onmouseenter={() => setHoveredSeries(county.id)}
                     onmouseleave={() => setHoveredSeries(null)}
@@ -1215,7 +1470,7 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
             Mortality (per 100,000)
           </text>
   
-          {#each visibleSeries as series (series.id + "-hitbox")}
+          {#each chartSeries as series (series.id + "-hitbox")}
             <path
               d={lineGenerator(series.points) || ""}
               fill="none"
@@ -1227,7 +1482,7 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
             />
           {/each}
   
-          {#each visibleSeries as series (series.id)}
+          {#each chartSeries as series (series.id)}
   <path
     d={lineGenerator(series.points) || ""}
     fill="none"
@@ -1251,23 +1506,23 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
                 y2={label.labelY}
                 stroke={label.color}
                 stroke-width="1.2"
-                opacity={hoveredSeriesId && hoveredSeriesId !== label.id ? 0.18 : 0.72}
+                opacity={getDirectConnectorOpacity(label.id)}
               />
               <text
                 x={label.textX}
                 y={label.labelY}
                 dy="0.32em"
                 font-size="12"
-                font-weight={hoveredSeriesId === label.id ? "700" : "600"}
+                font-weight={getDirectLabelWeight(label.id)}
                 fill={label.color}
-                opacity={hoveredSeriesId && hoveredSeriesId !== label.id ? 0.18 : 1}
+                opacity={getDirectLabelOpacity(label.id)}
               >
                 {label.text}
               </text>
             {/each}
           {/if}
   
-          {#each visibleSeries as series (series.id + "-points")}
+          {#each chartSeries as series (series.id + "-points")}
             {#each series.validPoints as point (`${series.id}-${point.year}`)}
               <circle
                 role="img"
@@ -1409,6 +1664,13 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       background: #f1f1f1;
       font-weight: 600;
     }
+
+    .legend-chip.focus-chip {
+      border-color: #4d4d4d;
+      background: #f8fbff;
+      box-shadow: 0 0 0 2px rgba(78, 121, 167, 0.14);
+      font-weight: 700;
+    }
   
     .mode-btn:focus-visible,
     .legend-chip:focus-visible,
@@ -1438,6 +1700,14 @@ function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
       color: #555;
       margin-bottom: 10px;
       line-height: 1.45;
+    }
+
+    .focus-hint {
+      margin-top: 8px;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: #5f6b7a;
+      line-height: 1.4;
     }
   
     .reference-note {

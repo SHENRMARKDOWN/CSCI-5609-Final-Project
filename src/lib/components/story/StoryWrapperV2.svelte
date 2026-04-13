@@ -8,7 +8,6 @@
 
   import BumpChart from '$lib/components/BumpChart.svelte';
   import DetailLinePlot from '$lib/components/DetailLinePlot.svelte';
-  import USStrokeMortalityMap from '$lib/components/USStrokeMortalityMap.svelte';
   import USStrokeMortalityMapV2 from "$lib/components/USStrokeMortalityMapV2.svelte";
 
   import {
@@ -17,7 +16,7 @@
   selectedVis3Mode,
   selectedAgeGroup} from '$lib/stores';
 
-  let mode: 'story' | 'explore' = 'story'; // NEW
+  const HANDOFF_STEP = 13;
 
   type StorySection = 'vis1' | 'vis2' | 'vis3' | 'user';
   type StoryStep = {
@@ -32,12 +31,10 @@
   let introEl: HTMLElement;
   let stepEls: HTMLDivElement[] = [];
   let textColumnEl: HTMLDivElement;
+  let vizScrollEl: HTMLDivElement;
   let exploding = false;
   let introHidden = false;
 
-  $: if (currentStep >= 13) {
-    mode = 'explore';
-  } // NEW
 
   const storySteps: StoryStep[] = [
   {
@@ -98,7 +95,7 @@
     step: 10,
     section: 'vis3',
     title: 'Race 35-64: Full Comparison',
-    text: 'All race subgroup lines appear one by one — White, Black (Non-Hispanic), Hispanic, Asian/Pacific Islander, and American Indian/Alaska Native — completing the race comparison.'
+    text: 'Race subgroup lines appear one by one, and the newest or hovered subgroup stays emphasized so the comparison remains readable as the full set comes in.'
   },
   {
     step: 11,
@@ -122,6 +119,16 @@
 
   const totalSteps = storySteps.length;
   const vis3StartStep = 7;
+
+  let sectionKey: StorySection = 'user';
+  $: sectionKey =
+    currentStep >= 1 && currentStep <= 4
+      ? 'vis1'
+      : currentStep >= 5 && currentStep <= 6
+        ? 'vis2'
+        : currentStep >= 7 && currentStep <= 12
+          ? 'vis3'
+          : 'user';
 
   function clamp(value: number, min = 0, max = 1) {
     return Math.min(max, Math.max(min, value));
@@ -233,103 +240,116 @@
   }
 
   function applyStoryState(step: number) {
-  if (mode !== 'story') return;
+    if (step <= 0) return;
 
-  // VIS1: BumpChart
-  if (step >= 1 && step <= 4) {
-    if (step === 1) {
-      selectedYear.set(2019);
-      selectedState.set(null);
+    if (step >= 1 && step <= 4) {
+      if (step === 1) {
+        selectedYear.set(2019);
+        selectedState.set(null);
+      }
+
+      if (step === 2 || step === 3) {
+        selectedYear.set(null);
+        selectedState.set(null);
+      }
+
+      if (step === 4) {
+        selectedYear.set(null);
+        selectedState.set('MS');
+      }
+      return;
     }
 
-    if (step === 2 || step === 3) {
-      selectedYear.set(null);
-      selectedState.set(null);
-    }
-
-    if (step === 4) {
-      selectedYear.set(null);
+    if (step >= 5 && step <= 6) {
       selectedState.set('MS');
+      selectedYear.set(step === 5 ? 2019 : null);
+      return;
     }
-    return;
-  }
 
-  // VIS2: Map
-  if (step >= 5 && step <= 6) {
-    selectedState.set('MS');
-
-    if (step === 5) {
+    if (step >= 7 && step <= 12) {
+      selectedState.set('MS');
       selectedYear.set(2019);
+      return;
     }
 
-    if (step === 6) {
+    if (step === HANDOFF_STEP) {
+      selectedState.set('MS');
       selectedYear.set(null);
     }
-    return;
   }
-
-  // VIS3: DetailLinePlot
-  if (step >= 7 && step <= 12) {
-    selectedState.set('MS');
-    selectedYear.set(2019);
-    return;
-  }
-}
 
   function updateScrollState() {
-  if (mode !== 'story') return;
-  if (currentStep === 0) return;
+    if (currentStep === 0) return;
 
-  const validStepEls = stepEls.filter(Boolean);
-  if (validStepEls.length === 0) {
-    currentStep = 0;
-    transitionProgress = 0;
-    return;
+    const validStepEls = stepEls.filter(Boolean);
+    if (validStepEls.length === 0) {
+      currentStep = 0;
+      transitionProgress = 0;
+      return;
+    }
+
+    const scrollTop = textColumnEl?.scrollTop ?? 0;
+    const viewH = textColumnEl?.clientHeight ?? window.innerHeight;
+    const triggerY = scrollTop + viewH * 0.42;
+
+    const stepPositions = validStepEls.map((el) => el.offsetTop);
+    const firstStepTop = stepPositions[0];
+
+    if (triggerY < firstStepTop) {
+      currentStep = 0;
+      transitionProgress = 0;
+      return;
+    }
+
+    let activeIndex = stepPositions.findIndex((top, index) => {
+      const nextTop = stepPositions[index + 1] ?? Number.POSITIVE_INFINITY;
+      return triggerY >= top && triggerY < nextTop;
+    });
+
+    if (activeIndex === -1) activeIndex = stepPositions.length - 1;
+
+    const start = stepPositions[activeIndex];
+    const end =
+      stepPositions[activeIndex + 1] ??
+      start + Math.max(validStepEls[activeIndex]?.offsetHeight ?? viewH, viewH);
+
+    const nextStep = storySteps[activeIndex]?.step ?? 0;
+
+    if (nextStep !== currentStep) {
+      applyStoryState(nextStep);
+      currentStep = nextStep;
+    }
+
+    const lastStepEl = validStepEls[validStepEls.length - 1];
+    const lastStepBottom = (lastStepEl?.offsetTop ?? 0) + (lastStepEl?.offsetHeight ?? 0);
+    exploding = nextStep === HANDOFF_STEP && scrollTop + viewH > lastStepBottom + 40;
+    transitionProgress = clamp((triggerY - start) / Math.max(end - start, 1));
   }
 
-  const scrollTop = textColumnEl?.scrollTop ?? 0;
-  const viewH = textColumnEl?.clientHeight ?? window.innerHeight;
-  const triggerY = scrollTop + viewH * 0.42;
+  function handleVizWheel(event: WheelEvent) {
+    if (!vizScrollEl || !textColumnEl) return;
+    if (currentStep !== HANDOFF_STEP || !exploding) return;
+    if (event.deltaY >= 0) return;
 
-  const stepPositions = validStepEls.map((el) => el.offsetTop);
-  const firstStepTop = stepPositions[0];
+    const projectedScrollTop = vizScrollEl.scrollTop + event.deltaY;
+    if (projectedScrollTop > 0) return;
 
-  if (triggerY < firstStepTop) {
-    currentStep = 0;
-    transitionProgress = 0;
-    return;
+    event.preventDefault();
+    const leftoverDelta = projectedScrollTop;
+    vizScrollEl.scrollTop = 0;
+
+    if (leftoverDelta !== 0) {
+      textColumnEl.scrollTop = Math.max(0, textColumnEl.scrollTop + leftoverDelta);
+      updateScrollState();
+    }
   }
-
-  let activeIndex = stepPositions.findIndex((top, index) => {
-    const nextTop = stepPositions[index + 1] ?? Number.POSITIVE_INFINITY;
-    return triggerY >= top && triggerY < nextTop;
-  });
-
-  if (activeIndex === -1) activeIndex = stepPositions.length - 1;
-
-  const start = stepPositions[activeIndex];
-  const end =
-    stepPositions[activeIndex + 1] ??
-    start + Math.max(validStepEls[activeIndex]?.offsetHeight ?? viewH, viewH);
-
-  const nextStep = storySteps[activeIndex]?.step ?? 0;
-if (nextStep !== currentStep) {
-  applyStoryState(nextStep);
-  currentStep = nextStep;
-}
-
-const lastStepEl = validStepEls[validStepEls.length - 1];
-const lastStepBottom = (lastStepEl?.offsetTop ?? 0) + (lastStepEl?.offsetHeight ?? 0);
-exploding = scrollTop + viewH > lastStepBottom + 80;
-  transitionProgress = clamp((triggerY - start) / Math.max(end - start, 1));
-}
 
 onMount(() => {
   window.scrollTo(0, 0);
   let frame = 0;
+  let introTimer = 0;
 
   const scheduleUpdate = () => {
-    if (mode !== 'story') return;
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
@@ -338,28 +358,31 @@ onMount(() => {
   };
   
   const handleWindowScroll = () => {
-  if (mode !== 'story') return;
-  if (currentStep === 0 && window.scrollY > 60) {
-    currentStep = 1;
-    applyStoryState(1);
-    // Delay hiding intro until story-body has faded in
-    setTimeout(() => { introHidden = true; }, 400);
-    window.removeEventListener('scroll', handleWindowScroll);
-  }
-};
+    if (currentStep === 0 && window.scrollY > 60) {
+      currentStep = 1;
+      applyStoryState(1);
+      introTimer = window.setTimeout(() => {
+        introHidden = true;
+      }, 400);
+      window.removeEventListener('scroll', handleWindowScroll);
+    }
+  };
   
   scheduleUpdate();
   textColumnEl?.addEventListener('scroll', scheduleUpdate, { passive: true });
+  vizScrollEl?.addEventListener('wheel', handleVizWheel, { passive: false });
   window.addEventListener('scroll', handleWindowScroll, { passive: true });
   window.addEventListener('resize', scheduleUpdate);
   
   return () => {
+    if (introTimer) window.clearTimeout(introTimer);
     if (frame) cancelAnimationFrame(frame);
     textColumnEl?.removeEventListener('scroll', scheduleUpdate);
+    vizScrollEl?.removeEventListener('wheel', handleVizWheel);
     window.removeEventListener('scroll', handleWindowScroll);
     window.removeEventListener('resize', scheduleUpdate);
   };
-  });
+});
 </script>
 
 <div class={`story-page ${getThemeClass(currentStep)}`}>
@@ -434,7 +457,7 @@ onMount(() => {
 <div class="viz-panel">
   <div class="viz-box">
     <div class="panel-glow" aria-hidden="true"></div>
-    <div class="viz-scroll">
+    <div class="viz-scroll" bind:this={vizScrollEl}>
       <div class="viz-header">
         {#key `header-${currentStep}`}
           <div class="viz-header-content" in:fade={{ duration: 300 }} out:fade={{ duration: 180 }}>
@@ -450,35 +473,29 @@ onMount(() => {
         {/key}
       </div>
 
-      {#if mode === 'story'}
-        {@const sectionKey =
-          currentStep >= 1 && currentStep <= 4 ? 'vis1'
-          : currentStep >= 5 && currentStep <= 6 ? 'vis2'
-          : 'vis3'}
-        {#key sectionKey}
-          <div class="viz-stage" in:fly={{ y: 20, duration: 420 }} out:fade={{ duration: 200 }}>
-            {#if currentStep >= 1 && currentStep <= 4}
-              <div class="chart-shell" in:fade={{ duration: 340 }}>
-                <BumpChart storyStep={currentStep} storyMode={true} />
-              </div>
-            {:else if currentStep >= 5 && currentStep <= 6}
-              <div class="chart-shell" in:fade={{ duration: 340 }}>
-                <USStrokeMortalityMapV2 storyStep={currentStep} storyMode={true} />
-              </div>
-            {:else if currentStep >= 7 && currentStep <= 12}
-              <div class="chart-shell" in:fade={{ duration: 340 }}>
-                <DetailLinePlot storyStep={currentStep} storyMode={true} />
-              </div>
-            {/if}
-          </div>
-        {/key}
-      {:else}
-        <div class="viz-stage explore-stage">
-          <BumpChart storyMode={false} />
-          <USStrokeMortalityMapV2 storyStep={currentStep} storyMode={true} />
-          <DetailLinePlot storyMode={false} />
+      {#key sectionKey}
+        <div class="viz-stage" in:fly={{ y: 20, duration: 420 }} out:fade={{ duration: 200 }}>
+          {#if currentStep >= 1 && currentStep <= 4}
+            <div class="chart-shell" in:fade={{ duration: 340 }}>
+              <BumpChart storyStep={currentStep} storyMode={true} />
+            </div>
+          {:else if currentStep >= 5 && currentStep <= 6}
+            <div class="chart-shell" in:fade={{ duration: 340 }}>
+              <USStrokeMortalityMapV2 storyStep={currentStep} storyMode={true} />
+            </div>
+          {:else if currentStep >= 7 && currentStep <= 12}
+            <div class="chart-shell" in:fade={{ duration: 340 }}>
+              <DetailLinePlot storyStep={currentStep} storyMode={true} />
+            </div>
+          {:else if currentStep === HANDOFF_STEP}
+            <div class="viz-stage explore-stage">
+              <BumpChart storyMode={false} />
+              <USStrokeMortalityMapV2 storyMode={false} />
+              <DetailLinePlot storyMode={false} />
+            </div>
+          {/if}
         </div>
-      {/if}
+      {/key}
     </div>
   </div>
 </div>
@@ -916,6 +933,7 @@ onMount(() => {
     padding: 18px;
     box-sizing: border-box;
     overflow: auto;
+    overscroll-behavior-y: contain;
     z-index: 1;
   }
 
