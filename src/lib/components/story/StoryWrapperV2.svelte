@@ -1,30 +1,18 @@
 <script lang="ts">
-  //import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
-  //import StoryBumpChart from '$lib/components/story/StoryBumpChart.svelte';
-  //import StoryDetailLinePlot from '$lib/components/story/StoryDetailLinePlot.svelte';
-  //import StoryUSStrokeMortalityMap from '$lib/components/story/StoryUSStrokeMortalityMap.svelte';
 
   import BumpChart from '$lib/components/BumpChart.svelte';
   import DetailLinePlot from '$lib/components/DetailLinePlot.svelte';
   import USStrokeMortalityMapV2 from '$lib/components/USStrokeMortalityMapV2.svelte';
 
-  import {
-    selectedState,
-    selectedYear,
-    selectedVis3Mode,
-    selectedAgeGroup
-  } from '$lib/stores';
+  import { selectedState, selectedYear } from '$lib/stores';
 
   const HANDOFF_STEP = 13;
   const INTRO_ENTRY_SCROLL = 60;
   const INTRO_RETURN_THRESHOLD = 28;
   const STEP_PROGRESS_TRANSITION_MS = 90;
-  const HANDOFF_EXPLODE_ENTER_PROGRESS = 0.72;
-  const HANDOFF_EXPLODE_EXIT_PROGRESS = 0.58;
-  const HANDOFF_MIN_EXTRA_SCROLL_RATIO = 0.22;
-  const HANDOFF_MIN_EXTRA_SCROLL_PX = 180;
+  const STEP13_EXPLODE_OFFSET = 40;
 
   type StorySection = 'vis1' | 'vis2' | 'vis3' | 'user';
   type StoryStep = {
@@ -33,22 +21,6 @@
     title: string;
     text: string;
   };
-
-  let currentStep = 0;
-  let transitionProgress = 0;
-  let renderedProgress = 0;
-  let progressTransitionMs = STEP_PROGRESS_TRANSITION_MS;
-  let introEl: HTMLElement;
-  let stepEls: HTMLDivElement[] = [];
-  let textColumnEl: HTMLDivElement;
-  let vizScrollEl: HTMLDivElement;
-  let exploding = false;
-  let introHidden = false;
-  let introTimer = 0;
-  let lastProgressStep = 0;
-  let progressRafA = 0;
-  let progressRafB = 0;
-  let handoffEntryScrollTop = 0;
 
   const storySteps: StoryStep[] = [
     {
@@ -133,6 +105,20 @@
 
   const totalSteps = storySteps.length;
   const vis3StartStep = 7;
+
+  let currentStep = 0;
+  let renderedProgress = 0;
+  let progressTransitionMs = STEP_PROGRESS_TRANSITION_MS;
+  let lastProgressStep = 0;
+  let progressRafA = 0;
+  let progressRafB = 0;
+
+  let stepEls: Array<HTMLDivElement | null> = [];
+  let textColumnEl: HTMLDivElement | null = null;
+  let vizScrollEl: HTMLDivElement | null = null;
+  let exploding = false;
+  let introHidden = false;
+  let introTimer = 0;
 
   let sectionKey: StorySection = 'user';
   $: sectionKey =
@@ -226,10 +212,6 @@
     };
   }
 
-  //function openDashboard() {
-  // goto('/');
-  //}
-
   function getThemeClass(step: number) {
     if (step >= 1 && step <= 4) return 'theme-vis1';
     if (step >= 5 && step <= 6) return 'theme-vis2';
@@ -298,13 +280,11 @@
     clearIntroTimer();
     clearProgressRafs();
     currentStep = 0;
-    transitionProgress = 0;
     renderedProgress = 0;
     progressTransitionMs = STEP_PROGRESS_TRANSITION_MS;
     lastProgressStep = 0;
     introHidden = false;
     exploding = false;
-    handoffEntryScrollTop = 0;
 
     if (textColumnEl) {
       textColumnEl.scrollTop = 0;
@@ -323,7 +303,6 @@
     clearIntroTimer();
     clearProgressRafs();
     currentStep = 1;
-    transitionProgress = 0;
     applyStoryState(1);
     setPerStepProgress(1, 0);
 
@@ -339,29 +318,6 @@
       introHidden = true;
       introTimer = 0;
     }, 400);
-  }
-
-  function getHandoffExplodeMinScroll(viewH: number) {
-    return Math.max(HANDOFF_MIN_EXTRA_SCROLL_PX, Math.round(viewH * HANDOFF_MIN_EXTRA_SCROLL_RATIO));
-  }
-
-  function updateExplodingState(step: number, progress: number, scrollTop: number, viewH: number) {
-    if (step !== HANDOFF_STEP) {
-      exploding = false;
-      return;
-    }
-
-    const extraScrollSinceEntry = Math.max(0, scrollTop - handoffEntryScrollTop);
-    const minExtraScroll = getHandoffExplodeMinScroll(viewH);
-
-    if (!exploding) {
-      exploding =
-        progress >= HANDOFF_EXPLODE_ENTER_PROGRESS &&
-        extraScrollSinceEntry >= minExtraScroll;
-      return;
-    }
-
-    exploding = progress >= HANDOFF_EXPLODE_EXIT_PROGRESS;
   }
 
   function applyStoryState(step: number) {
@@ -404,16 +360,16 @@
   }
 
   function updateScrollState() {
-    if (currentStep === 0) return;
+    if (currentStep === 0 || !textColumnEl) return;
 
-    const validStepEls = stepEls.filter(Boolean);
+    const validStepEls = stepEls.filter(Boolean) as HTMLDivElement[];
     if (validStepEls.length === 0) {
       resetToIntro();
       return;
     }
 
-    const scrollTop = textColumnEl?.scrollTop ?? 0;
-    const viewH = textColumnEl?.clientHeight ?? window.innerHeight;
+    const scrollTop = textColumnEl.scrollTop;
+    const viewH = textColumnEl.clientHeight || window.innerHeight;
     const triggerY = scrollTop + viewH * 0.42;
 
     const stepPositions = validStepEls.map((el) => el.offsetTop);
@@ -442,27 +398,20 @@
       nextProgress = clamp((triggerY - start) / Math.max(end - start, 1));
     }
 
-    const previousStep = currentStep;
-
     if (nextStep !== currentStep) {
       applyStoryState(nextStep);
       currentStep = nextStep;
 
-      if (nextStep === HANDOFF_STEP) {
-        handoffEntryScrollTop = scrollTop;
-        exploding = false;
-        if (vizScrollEl) {
-          vizScrollEl.scrollTop = 0;
-        }
-      } else if (previousStep === HANDOFF_STEP) {
-        handoffEntryScrollTop = 0;
-        exploding = false;
+      if (nextStep === HANDOFF_STEP && vizScrollEl) {
+        vizScrollEl.scrollTop = 0;
       }
     }
 
-    transitionProgress = nextProgress;
     setPerStepProgress(nextStep, nextProgress);
-    updateExplodingState(nextStep, nextProgress, scrollTop, viewH);
+
+    const lastStepEl = validStepEls[validStepEls.length - 1];
+    const lastStepBottom = (lastStepEl?.offsetTop ?? 0) + (lastStepEl?.offsetHeight ?? 0);
+    exploding = nextStep === HANDOFF_STEP && scrollTop + viewH > lastStepBottom + STEP13_EXPLODE_OFFSET;
   }
 
   function maybeReturnToIntro(deltaY: number) {
@@ -500,10 +449,9 @@
   function handleVizWheel(event: WheelEvent) {
     if (!vizScrollEl || !textColumnEl || currentStep === 0) return;
 
-    // Keep the right panel independently scrollable for the current visualization.
-    // Only when step 13 is fully expanded and the user scrolls upward past the
-    // very top of the right panel do we hand control back to the story so the
-    // layout can collapse back to step 12.
+    // Keep the right panel independently scrollable for steps 1-12.
+    // Only when step 13 is fully expanded and the reader scrolls above the top
+    // of the right panel do we return control to the story column.
     if (currentStep !== HANDOFF_STEP || !exploding) return;
     if (event.deltaY >= 0) return;
 
@@ -567,7 +515,7 @@
     </div>
   {/if}
 
-  <section class="intro-section" class:hidden={introHidden} data-step="0" bind:this={introEl}>
+  <section class="intro-section" class:hidden={introHidden} data-step="0">
     <div class="intro-box">
       <p class="eyebrow" in:fade={{ duration: 420, delay: 80 }}>
         Author-Driven Story
@@ -635,7 +583,7 @@
         <div class="viz-scroll" bind:this={vizScrollEl}>
           <div class="viz-header">
             {#key `header-${currentStep}`}
-              <div class="viz-header-content" in:fade={{ duration: 300 }} out:fade={{ duration: 180 }}>
+              <div class="viz-header-content" in:fade={{ duration: 280 }} out:fade={{ duration: 180 }}>
                 <div class="viz-title-block">
                   <p class="viz-tag">{getVizMeta(currentStep).tag}</p>
                   <h3>{getVizMeta(currentStep).title}</h3>
@@ -649,17 +597,17 @@
           </div>
 
           {#key sectionKey}
-            <div class="viz-stage" in:fly={{ y: 20, duration: 420 }} out:fade={{ duration: 200 }}>
+            <div class="viz-stage" in:fly={{ y: 16, duration: 360 }} out:fade={{ duration: 180 }}>
               {#if currentStep >= 1 && currentStep <= 4}
-                <div class="chart-shell" in:fade={{ duration: 340 }}>
+                <div class="chart-shell" in:fade={{ duration: 280 }}>
                   <BumpChart storyStep={currentStep} storyMode={true} />
                 </div>
               {:else if currentStep >= 5 && currentStep <= 6}
-                <div class="chart-shell" in:fade={{ duration: 340 }}>
+                <div class="chart-shell" in:fade={{ duration: 280 }}>
                   <USStrokeMortalityMapV2 storyStep={currentStep} storyMode={true} />
                 </div>
               {:else if currentStep >= 7 && currentStep <= 12}
-                <div class="chart-shell" in:fade={{ duration: 340 }}>
+                <div class="chart-shell" in:fade={{ duration: 280 }}>
                   <DetailLinePlot storyStep={currentStep} storyMode={true} />
                 </div>
               {:else if currentStep === HANDOFF_STEP}
@@ -675,6 +623,7 @@
       </div>
     </div>
   </div>
+
   <div style="height: 200vh; pointer-events: none;" aria-hidden="true"></div>
 </div>
 
@@ -837,11 +786,10 @@
     flex-shrink: 0;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-    will-change: width, opacity, padding;
     transition:
-      width 620ms cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 320ms ease,
-      padding 620ms cubic-bezier(0.22, 1, 0.36, 1);
+      width 500ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 400ms ease,
+      padding 500ms ease;
   }
 
   .story-body.exploding .text-column {
@@ -1049,8 +997,7 @@
     padding: 24px 24px 24px 8px;
     box-sizing: border-box;
     z-index: 10;
-    will-change: padding;
-    transition: padding 620ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: padding 500ms cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
   }
 
@@ -1069,12 +1016,11 @@
     box-shadow: 0 20px 48px rgba(15, 23, 42, 0.1);
     overflow: hidden;
     backdrop-filter: blur(10px);
-    will-change: transform, box-shadow;
     transition:
-      transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 360ms ease,
-      box-shadow 420ms ease,
-      background 360ms ease;
+      transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 320ms ease,
+      box-shadow 320ms ease,
+      background 320ms ease;
   }
 
   .theme-vis1 .viz-box {
@@ -1097,10 +1043,6 @@
     box-shadow: 0 24px 52px rgba(79, 70, 229, 0.1);
   }
 
-  .story-body.exploding .viz-box {
-    transform: translateY(-2px) scale(1.003);
-  }
-
   .panel-glow {
     position: absolute;
     inset: 0;
@@ -1121,10 +1063,14 @@
   }
 
   .viz-header {
-    position: relative;
+    position: sticky;
+    top: 0;
     min-height: 76px;
-    margin-bottom: 16px;
-    z-index: 1;
+    margin: -18px -18px 16px -18px;
+    padding: 18px 18px 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 78%, rgba(255, 255, 255, 0));
+    backdrop-filter: blur(8px);
+    z-index: 3;
   }
 
   .viz-header-content {
@@ -1183,78 +1129,13 @@
     position: relative;
   }
 
-  .user-mode-card {
-    min-height: calc(100vh - 180px);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 16px;
-    padding: 32px;
-    border-radius: 22px;
-    background:
-      linear-gradient(140deg, rgba(29, 78, 216, 0.07), rgba(14, 116, 144, 0.06)),
-      #ffffff;
-    border: 1px solid #dbe3ee;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  }
-
-  .user-mode-tag {
-    margin: 0;
-    color: #1d4ed8;
-    font-size: 0.86rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .user-mode-card h4 {
-    margin: 0;
-    font-size: 2rem;
-    line-height: 1.05;
-  }
-
-  .user-mode-card p {
-    margin: 0;
-    max-width: 720px;
-    color: #334155;
-    font-size: 1.03rem;
-    line-height: 1.75;
-  }
-
-  .user-mode-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: fit-content;
-    padding: 12px 18px;
-    border-radius: 999px;
-    background: #1d4ed8;
-    border: 0;
-    color: #ffffff;
-    text-decoration: none;
-    cursor: pointer;
-    font: inherit;
-    font-weight: 700;
-    box-shadow: 0 10px 20px rgba(29, 78, 216, 0.22);
-    transition:
-      transform 180ms ease,
-      box-shadow 180ms ease,
-      background 180ms ease;
-  }
-
-  .user-mode-link:hover {
-    background: #1e40af;
-    transform: translateY(-1px);
-    box-shadow: 0 14px 24px rgba(29, 78, 216, 0.28);
-  }
-
-  .user-mode-link:focus-visible {
-    outline: 3px solid rgba(37, 99, 235, 0.28);
-    outline-offset: 3px;
+  .explore-stage {
+    display: grid;
+    gap: 20px;
   }
 
   @media (max-width: 1120px) {
-    .viz-header {
+    .viz-header-content {
       flex-direction: column;
       align-items: flex-start;
     }
@@ -1273,10 +1154,16 @@
     .story-body {
       display: block;
       padding: 0 16px 32px;
+      height: auto;
+      min-height: 100vh;
+      position: relative;
     }
 
     .text-column {
       width: 100%;
+      height: auto;
+      overflow: visible;
+      padding: 0;
     }
 
     .text-card-stage {
@@ -1295,16 +1182,29 @@
 
     .viz-panel {
       position: relative;
-      top: auto;
-      right: auto;
       width: 100%;
       height: auto;
       margin-top: 24px;
+      padding: 0;
     }
 
     .viz-box {
       min-height: 420px;
       height: auto;
+    }
+
+    .viz-scroll {
+      height: auto;
+      overflow: visible;
+    }
+
+    .viz-header {
+      position: relative;
+      top: auto;
+      margin: 0 0 16px;
+      padding: 0 0 8px;
+      background: transparent;
+      backdrop-filter: none;
     }
 
     .intro-box {
