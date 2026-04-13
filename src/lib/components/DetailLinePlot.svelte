@@ -3,6 +3,7 @@
 <script lang="ts">
     // @ts-nocheck
     import { onMount } from "svelte";
+    import { draw } from "svelte/transition";
     import * as d3 from "d3";
     import { asset } from "$app/paths";
     import {
@@ -177,7 +178,9 @@
     let lastViewKey = "";
     let lastStateForReset: string | null = null;
     let lastAppliedStoryStep = -1;
-  
+    let newlyAddedIds = new Set<string>();
+
+      
     function parseRow(d: d3.DSVRowString): Vis3Row {
       return {
         state: d.state,
@@ -221,105 +224,72 @@
     });
     
     $: if (storyMode && storyStep != null && !loading && storyStep !== lastAppliedStoryStep) {
-      lastAppliedStoryStep = storyStep;
-      
-      countyToAdd = "";
-      tooltip = null;
-      hoveredSeriesId = null;
-      countyColorAssignments = {};
-      
-      if (storyStep === 7) {
-        selectedVis3Mode.set("overall");
-        selectedAgeGroup.set("35+");
-        activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
-      } 
-      else if (storyStep === 8) {
-        selectedVis3Mode.set("sex");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = ["sex_overall"];
-      } 
-      else if (storyStep === 9) {
-        selectedVis3Mode.set("sex");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = ["sex_overall", "sex_men"];
-      } 
-      else if (storyStep === 10) {
-        selectedVis3Mode.set("sex");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = ["sex_overall", "sex_men", "sex_women"];
-      } 
-      else if (storyStep === 11) {
-        selectedVis3Mode.set("sex");
-        selectedAgeGroup.set("65+");
-        activeSeriesIds = ["sex_overall"];
-      } 
-      else if (storyStep === 12) {
-        selectedVis3Mode.set("sex");
-        selectedAgeGroup.set("65+");
-        activeSeriesIds = ["sex_overall", "sex_men"];
-      } 
-      else if (storyStep === 13) {
-        selectedVis3Mode.set("sex");
-        selectedAgeGroup.set("65+");
-        activeSeriesIds = ["sex_overall", "sex_men", "sex_women"];
-      } 
-      else if (storyStep === 14) {
-        selectedVis3Mode.set("race");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = ["race_overall"];
-      } 
-      else if (storyStep === 15) {
-        selectedVis3Mode.set("race");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = ["race_overall", "race_white"];
-      } 
-      else if (storyStep === 16) {
-        selectedVis3Mode.set("race");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = ["race_overall", "race_white", "race_black_non_hispanic"];
-      } 
-      else if (storyStep === 17) {
-        selectedVis3Mode.set("race");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic"];
-      } 
-      else if (storyStep === 18) {
-        selectedVis3Mode.set("race");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = [
-          "race_overall",
-          "race_white",
-          "race_black_non_hispanic",
-          "race_hispanic",
-          "race_asian_pacific_islander"
-        ];}
-      else if (storyStep === 19) {
-        selectedVis3Mode.set("race");
-        selectedAgeGroup.set("35-64");
-        activeSeriesIds = [
-          "race_overall",
-          "race_white",
-          "race_black_non_hispanic",
-          "race_hispanic",
-          "race_asian_pacific_islander",
-      "race_american_indian_alaska_native"
-    ];
-  } 
-  else if (storyStep === 20) {
+  lastAppliedStoryStep = storyStep;
+
+  countyToAdd = "";
+  tooltip = null;
+  hoveredSeriesId = null;
+  countyColorAssignments = {};
+  newlyAddedIds = new Set();
+
+  function animateIn(steps: { ids: string[]; delay: number }[]) {
+    steps.forEach(({ ids, delay }) => {
+      setTimeout(() => {
+        const prev = new Set(activeSeriesIds);
+        activeSeriesIds = ids;
+        newlyAddedIds = new Set(ids.filter((id) => !prev.has(id)));
+      }, delay);
+    });
+  }
+
+  if (storyStep === 7) {
+    selectedVis3Mode.set("overall");
+    selectedAgeGroup.set("35+");
+    activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
+    newlyAddedIds = new Set(activeSeriesIds);
+  }
+  else if (storyStep === 8) {
+    selectedVis3Mode.set("sex");
+    selectedAgeGroup.set("35-64");
+    animateIn([
+      { ids: ["sex_overall"], delay: 0 },
+      { ids: ["sex_overall", "sex_men"], delay: 900 },
+      { ids: ["sex_overall", "sex_men", "sex_women"], delay: 1800 },
+    ]);
+  }
+  else if (storyStep === 9) {
+    selectedVis3Mode.set("race");
+    selectedAgeGroup.set("35-64");
+    activeSeriesIds = ["race_overall"];
+    newlyAddedIds = new Set(["race_overall"]);
+  }
+  else if (storyStep === 10) {
+    selectedVis3Mode.set("race");
+    selectedAgeGroup.set("35-64");
+    animateIn([
+      { ids: ["race_overall"], delay: 0 },
+      { ids: ["race_overall", "race_white"], delay: 700 },
+      { ids: ["race_overall", "race_white", "race_black_non_hispanic"], delay: 1400 },
+      { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic"], delay: 2100 },
+      { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic", "race_asian_pacific_islander"], delay: 2800 },
+      { ids: ["race_overall", "race_white", "race_black_non_hispanic", "race_hispanic", "race_asian_pacific_islander", "race_american_indian_alaska_native"], delay: 3500 },
+    ]);
+  }
+  else if (storyStep === 11) {
     selectedVis3Mode.set("county");
     selectedAgeGroup.set("35-64");
     activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
-  } 
-  else if (storyStep >= 21 && storyStep <= 25) {
+    newlyAddedIds = new Set(activeSeriesIds);
+  }
+  else if (storyStep === 12) {
     selectedVis3Mode.set("county");
     selectedAgeGroup.set("35-64");
-
-    const count = storyStep - 20;
-    const countyIds = suggestedCounties.slice(0, count).map((d) => d.id);
-
-    activeSeriesIds = referenceSeriesId
-      ? [referenceSeriesId, ...countyIds]
-      : countyIds;
+    const base = referenceSeriesId ? [referenceSeriesId] : [];
+    const steps = [base, ...Array.from({ length: 5 }, (_, i) => [
+      ...base,
+      ...suggestedCounties.slice(0, i + 1).map((d) => d.id)
+    ])];
+    animateIn(steps.map((ids, i) => ({ ids, delay: i * 700 })));
   }
 }
 
@@ -633,8 +603,38 @@
     }
   
     function setHoveredSeries(id: string | null) {
-      hoveredSeriesId = id;
+  hoveredSeriesId = id;
+}
+
+function applyDraw(node: SVGPathElement, shouldAnimate: boolean) {
+  if (!shouldAnimate) return {};
+  const originalDash = node.getAttribute("stroke-dasharray") || "";
+  const length = node.getTotalLength();
+  node.style.strokeDasharray = String(length);
+  node.style.strokeDashoffset = String(length);
+  node.style.transition = "none";
+  requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    node.style.transition = "stroke-dashoffset 900ms cubic-bezier(0.4, 0, 0.2, 1)";
+    node.style.strokeDashoffset = "0";
+  });
+});
+
+  const onEnd = () => {
+    node.style.transition = "";
+    node.style.strokeDasharray = originalDash;
+    node.style.strokeDashoffset = "";
+  };
+  node.addEventListener("transitionend", onEnd, { once: true });
+  return {
+    destroy() {
+      node.removeEventListener("transitionend", onEnd);
+      node.style.transition = "";
+      node.style.strokeDasharray = originalDash;
+      node.style.strokeDashoffset = "";
     }
+  };
+}
   
     function buildEndLabels(seriesList: SeriesMeta[]): EndLabel[] {
       if ($selectedVis3Mode !== "sex" && $selectedVis3Mode !== "race") return [];
@@ -1228,18 +1228,19 @@
           {/each}
   
           {#each visibleSeries as series (series.id)}
-            <path
-              d={lineGenerator(series.points) || ""}
-              fill="none"
-              stroke={getSeriesColor(series)}
-              stroke-width={getStrokeWidth(series)}
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-dasharray={getStrokeDasharray(series)}
-              opacity={getSeriesOpacity(series)}
-              pointer-events="none"
-            />
-          {/each}
+  <path
+    d={lineGenerator(series.points) || ""}
+    fill="none"
+    stroke={getSeriesColor(series)}
+    stroke-width={getStrokeWidth(series)}
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-dasharray={getStrokeDasharray(series)}
+    opacity={getSeriesOpacity(series)}
+    pointer-events="none"
+    use:applyDraw={newlyAddedIds.has(series.id)}
+  />
+{/each}
   
           {#if directLabels.length}
             {#each directLabels as label (label.id)}

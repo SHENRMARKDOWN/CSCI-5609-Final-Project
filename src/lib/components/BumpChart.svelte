@@ -297,10 +297,12 @@
     .domain([0, d3.max(data, d => d.mortality) ?? 200])
     .range([margin.left, width - margin.right]);
 
-    const xAxis = d3
-      .axisBottom(x)
+    const xAxis = currentSelectedYear !== null
+  ? d3.axisBottom(barX).ticks(6).tickFormat(d3.format(".1f"))
+  : d3.axisBottom(x)
       .tickValues(d3.range(yearExtent[0], yearExtent[1] + 1))
       .tickFormat(d3.format("d"));
+
 
     const ranks = d3.range(1, maxRank + 1);
     //const firstPoints = data.filter((d) => d.year === minYear);
@@ -323,18 +325,18 @@
       .attr("stroke-width", 0.5)
       .attr("opacity", 0.5);
 
-    if (currentSelectedYear !== null) {
-      const bandWidth = 20;
+    //if (currentSelectedYear !== null) {
+      //const bandWidth = 20;
 
-      svgEl
-        .append("rect")
-        .attr("x", x(currentSelectedYear) - bandWidth / 2)
-        .attr("y", margin.top)
-        .attr("width", bandWidth)
-        .attr("height", height - margin.top - margin.bottom)
-        .attr("fill", "#ccc")
-        .attr("opacity", 0.2);
-    }
+      //svgEl
+        //.append("rect")
+        //.attr("x", x(currentSelectedYear) - bandWidth / 2)
+        //.attr("y", margin.top)
+        //.attr("width", bandWidth)
+        //.attr("height", height - margin.top - margin.bottom)
+        //.attr("fill", "#ccc")
+        //.attr("opacity", 0.2);
+    //}
 
     svgEl
       .selectAll(".state-label")
@@ -361,22 +363,25 @@
   currentSelectedState === d.state ? "black" : "#666");
   
 
-    const xAxisG = svgEl
-      .append("g")
-      .attr("transform", `translate(0, ${height - margin.bottom})`)
-      .call(xAxis);
+
+const xAxisG = svgEl
+  .append("g")
+  .attr("transform", `translate(0, ${height - margin.bottom})`)
+  .call(xAxis);
 
     xAxisG.select(".domain").attr("stroke", "#666");
     xAxisG.selectAll("line").attr("stroke", "#999");
     xAxisG.selectAll("text").attr("font-size", "10px").attr("fill", "#444");
 
-    xAxisG
-      .selectAll(".tick")
-      .style("cursor", "pointer")
-      .on("click", function (event, d) {
-        event.stopPropagation();
-        selectedYear.update((curr) => (curr === d ? null : d));
-      });
+    if (currentSelectedYear === null) {
+  xAxisG
+    .selectAll(".tick")
+    .style("cursor", "pointer")
+    .on("click", function (event, d) {
+      event.stopPropagation();
+      selectedYear.update((curr) => (curr === d ? null : d));
+    });
+}
 
     svgEl
       .append("text")
@@ -385,7 +390,18 @@
       .attr("text-anchor", "middle")
       .attr("font-size", "20px")
       .attr("fill", "#333")
-      .text("Year"); // X-axis label
+      .text(currentSelectedYear !== null ? "Mortality Rate" : "Year");
+
+      if (currentSelectedYear !== null) {
+        svgEl
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", margin.top - 35) 
+        .attr("text-anchor", "middle")
+        .attr("font-size", "16px")
+        .attr("fill", "#333")
+        .text(`Stroke Mortality by State — ${currentSelectedYear}`);
+      }
 
     svgEl
       .append("text")
@@ -469,48 +485,11 @@
       .attr("cx", (d) => x(d.year))
       .attr("cy", (d) => y(d.rank))
       .attr("fill", getStateColor(state))
-      .attr("opacity", (d) => {
-        if (currentSelectedYear === null) return isSelected ? 1 : 0.1;
-        return d.year === currentSelectedYear ? 1 : 0.05;
-      })
-      .attr("r", (d) =>
-      currentSelectedYear !== null && d.year === currentSelectedYear
-      ? 0   
-      : (currentSelectedState === state ? 12 : 8)
-    )
-    .attr("class", `dot dot-${state}`)
-    .transition()
-    .duration(600)
-    .ease(d3.easeCubicInOut)
-    .attr("r", (d) =>
-    currentSelectedYear !== null && d.year === currentSelectedYear
-    ? (currentSelectedState === state ? 12 : 8)
-    : (currentSelectedState === state ? 12 : 8)
-  )
-  if (currentSelectedYear !== null) {
-  const yearData = sortedValues.filter(d => d.year === currentSelectedYear);
-
-  svgEl
-    .selectAll(`.point-label-${state}`)
-    .data(yearData)
-    .enter()
-    .append("text")
-    .attr("x", (d) => {
-      const xPos = x(d.year);
-      return xPos > width - 100 ? xPos - 8 : xPos + 8; 
-    })
-    .attr("y", (d) => y(d.rank))
-    .attr("dy", "0.35em")
-    .attr("text-anchor", (d) => {
-      const xPos = x(d.year);
-      return xPos > width - 100 ? "end" : "start";
-    })
-    .text((d) => `${stateFullName[d.state] || d.state} (${d.rank})`)
-    .attr("fill","white")
-    .attr("font-size", "10px")
-    .attr("font-weight", "bold")
-    .attr("pointer-events", "none");
-}
+      .attr("opacity", currentSelectedYear !== null ? 0 : (isSelected ? 1 : 0.1))
+      .attr("r", currentSelectedState === state ? 12 : 8)
+      .attr("class", `dot dot-${state}`)
+      
+  
   ;
     });
 
