@@ -11,8 +11,9 @@
   const HANDOFF_STEP = 13;
   const INTRO_ENTRY_SCROLL = 60;
   const INTRO_RETURN_THRESHOLD = 28;
-  const STEP_PROGRESS_TRANSITION_MS = 90;
   const STEP13_EXPLODE_OFFSET = 40;
+  const VIZ_STEP_TRANSITION_MS = 360;
+  const STEP_CENTER_TOLERANCE = 8;
 
   type StorySection = 'vis1' | 'vis2' | 'vis3' | 'user';
   type StoryStep = {
@@ -107,11 +108,6 @@
   const vis3StartStep = 7;
 
   let currentStep = 0;
-  let renderedProgress = 0;
-  let progressTransitionMs = STEP_PROGRESS_TRANSITION_MS;
-  let lastProgressStep = 0;
-  let progressRafA = 0;
-  let progressRafB = 0;
 
   let stepEls: Array<HTMLDivElement | null> = [];
   let storyBodyEl: HTMLDivElement | null = null;
@@ -120,6 +116,9 @@
   let exploding = false;
   let introHidden = false;
   let introTimer = 0;
+  let vizTransitioning = false;
+  let vizTransitionDirection: 'forward' | 'backward' = 'forward';
+  let vizTransitionTimer = 0;
 
   let sectionKey: StorySection = 'user';
   $: sectionKey =
@@ -133,41 +132,6 @@
 
   function clamp(value: number, min = 0, max = 1) {
     return Math.min(max, Math.max(min, value));
-  }
-
-  function clearProgressRafs() {
-    if (progressRafA) {
-      cancelAnimationFrame(progressRafA);
-      progressRafA = 0;
-    }
-
-    if (progressRafB) {
-      cancelAnimationFrame(progressRafB);
-      progressRafB = 0;
-    }
-  }
-
-  function setPerStepProgress(step: number, progress: number) {
-    const nextProgress = clamp(progress);
-
-    if (step !== lastProgressStep) {
-      lastProgressStep = step;
-      clearProgressRafs();
-      progressTransitionMs = 0;
-      renderedProgress = nextProgress;
-
-      progressRafA = requestAnimationFrame(() => {
-        progressRafA = 0;
-        progressRafB = requestAnimationFrame(() => {
-          progressRafB = 0;
-          progressTransitionMs = STEP_PROGRESS_TRANSITION_MS;
-        });
-      });
-
-      return;
-    }
-
-    renderedProgress = nextProgress;
   }
 
   function getVizMeta(step: number) {
@@ -277,15 +241,30 @@
     introTimer = 0;
   }
 
+  function clearVizTransitionTimer() {
+    if (!vizTransitionTimer) return;
+    window.clearTimeout(vizTransitionTimer);
+    vizTransitionTimer = 0;
+  }
+
+  function triggerVizTransition(previousStep: number, nextStep: number) {
+    clearVizTransitionTimer();
+    vizTransitionDirection = nextStep > previousStep ? 'forward' : 'backward';
+    vizTransitioning = true;
+
+    vizTransitionTimer = window.setTimeout(() => {
+      vizTransitioning = false;
+      vizTransitionTimer = 0;
+    }, VIZ_STEP_TRANSITION_MS);
+  }
+
   function resetToIntro() {
     clearIntroTimer();
-    clearProgressRafs();
+    clearVizTransitionTimer();
     currentStep = 0;
-    renderedProgress = 0;
-    progressTransitionMs = STEP_PROGRESS_TRANSITION_MS;
-    lastProgressStep = 0;
     introHidden = false;
     exploding = false;
+    vizTransitioning = false;
 
     if (textColumnEl) {
       textColumnEl.scrollTop = 0;
@@ -302,10 +281,10 @@
     if (currentStep !== 0) return;
 
     clearIntroTimer();
-    clearProgressRafs();
+    clearVizTransitionTimer();
     currentStep = 1;
     applyStoryState(1);
-    setPerStepProgress(1, 0);
+    vizTransitioning = false;
 
     if (textColumnEl) {
       textColumnEl.scrollTop = 0;
@@ -377,11 +356,9 @@
     const firstStepTop = stepPositions[0] ?? 0;
 
     let nextStep = 1;
-    let nextProgress = 0;
 
     if (triggerY < firstStepTop) {
       nextStep = 1;
-      nextProgress = 0;
     } else {
       let activeIndex = stepPositions.findIndex((top, index) => {
         const nextTop = stepPositions[index + 1] ?? Number.POSITIVE_INFINITY;
@@ -390,27 +367,20 @@
 
       if (activeIndex === -1) activeIndex = stepPositions.length - 1;
 
-      const start = stepPositions[activeIndex];
-      const end =
-        stepPositions[activeIndex + 1] ??
-        start + Math.max(validStepEls[activeIndex]?.offsetHeight ?? viewH, viewH);
-
       nextStep = storySteps[activeIndex]?.step ?? 1;
-      nextProgress = clamp((triggerY - start) / Math.max(end - start, 1));
     }
 
     if (nextStep !== currentStep) {
       const previousStep = currentStep;
       applyStoryState(nextStep);
       currentStep = nextStep;
+      triggerVizTransition(previousStep, nextStep);
 
       if (vizScrollEl) {
         const maxScrollTop = Math.max(0, vizScrollEl.scrollHeight - vizScrollEl.clientHeight);
         vizScrollEl.scrollTop = nextStep > previousStep ? 0 : maxScrollTop;
       }
     }
-
-    setPerStepProgress(nextStep, nextProgress);
 
     const lastStepEl = validStepEls[validStepEls.length - 1];
     const lastStepBottom = (lastStepEl?.offsetTop ?? 0) + (lastStepEl?.offsetHeight ?? 0);
@@ -430,8 +400,44 @@
     if (!textColumnEl) return;
 
     const nextTop = Math.max(0, textColumnEl.scrollTop + deltaY);
-    textColumnEl.scrollTop = nextTop;
+    textColumnEl.scrollTo({
+      top: nextTop,
+      behavior: shouldUseUnifiedWheel() ? 'smooth' : 'auto'
+    });
     updateScrollState();
+  }
+
+  function getStepCenterScrollTop(step: number) {
+    if (!textColumnEl) return null;
+
+    const stepEl = stepEls[step - 1];
+    if (!stepEl) return null;
+
+    const maxScrollTop = Math.max(0, textColumnEl.scrollHeight - textColumnEl.clientHeight);
+    const centeredTop = stepEl.offsetTop + stepEl.offsetHeight / 2 - textColumnEl.clientHeight / 2;
+    return clamp(centeredTop, 0, maxScrollTop);
+  }
+
+  function scrollTextColumnTowardActiveCenter(deltaY: number) {
+    if (!textColumnEl || currentStep <= 0) return deltaY;
+
+    const targetTop = getStepCenterScrollTop(currentStep);
+    if (targetTop === null) return deltaY;
+
+    const currentTop = textColumnEl.scrollTop;
+    const distanceToCenter = targetTop - currentTop;
+
+    if (Math.abs(distanceToCenter) <= STEP_CENTER_TOLERANCE) return deltaY;
+    if (Math.sign(deltaY) !== Math.sign(distanceToCenter)) return deltaY;
+
+    const stepTowardCenter = Math.sign(deltaY) * Math.min(Math.abs(deltaY), Math.abs(distanceToCenter));
+    textColumnEl.scrollTo({
+      top: currentTop + stepTowardCenter,
+      behavior: shouldUseUnifiedWheel() ? 'smooth' : 'auto'
+    });
+    updateScrollState();
+
+    return deltaY - stepTowardCenter;
   }
 
   function scrollElementByDelta(el: HTMLElement, deltaY: number) {
@@ -457,6 +463,8 @@
     if (maybeReturnToIntro(event.deltaY)) return;
 
     let remainingDelta = event.deltaY;
+
+    remainingDelta = scrollTextColumnTowardActiveCenter(remainingDelta);
 
     if (vizScrollEl) {
       remainingDelta = scrollElementByDelta(vizScrollEl, remainingDelta);
@@ -499,7 +507,7 @@
 
     return () => {
       clearIntroTimer();
-      clearProgressRafs();
+      clearVizTransitionTimer();
       if (frame) cancelAnimationFrame(frame);
       textColumnEl?.removeEventListener('scroll', scheduleUpdate);
       storyBodyEl?.removeEventListener('wheel', handleUnifiedWheel);
@@ -510,15 +518,6 @@
 </script>
 
 <div class={`story-page ${getThemeClass(currentStep)}`}>
-  {#if currentStep > 0}
-    <div class="story-progress-track" aria-hidden="true">
-      <div
-        class="story-progress-fill"
-        style={`transform:scaleX(${renderedProgress}); transition-duration:${progressTransitionMs}ms;`}
-      ></div>
-    </div>
-  {/if}
-
   <section class="intro-section" class:hidden={introHidden} data-step="0">
     <div class="intro-box">
       <p class="eyebrow" in:fade={{ duration: 420, delay: 80 }}>
@@ -600,7 +599,13 @@
             {/key}
           </div>
 
-          {#key sectionKey}
+          <div
+            class="viz-transition-layer"
+            class:viz-step-transitioning={vizTransitioning}
+            class:transition-forward={vizTransitionDirection === 'forward'}
+            class:transition-backward={vizTransitionDirection === 'backward'}
+          >
+            {#key sectionKey}
             <div
               class="viz-stage"
               in:fly={{ y: 22, duration: 480, opacity: 0 }}
@@ -626,7 +631,8 @@
                 </div>
               {/if}
             </div>
-          {/key}
+            {/key}
+          </div>
         </div>
       </div>
     </div>
@@ -675,28 +681,6 @@
 
   .story-page.theme-user::before {
     background: radial-gradient(circle, rgba(99, 102, 241, 0.14), transparent 68%);
-  }
-
-  .story-progress-track {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.4);
-    z-index: 30;
-    backdrop-filter: blur(8px);
-  }
-
-  .story-progress-fill {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, #1d4ed8 0%, #38bdf8 100%);
-    box-shadow: 0 0 20px rgba(29, 78, 216, 0.35);
-    transform-origin: left center;
-    will-change: transform;
-    transition-property: transform;
-    transition-timing-function: linear;
   }
 
   .intro-section {
@@ -792,6 +776,7 @@
     box-sizing: border-box;
     padding: 0 12px 0 24px;
     flex-shrink: 0;
+    scroll-behavior: smooth;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     transition:
@@ -809,13 +794,7 @@
   }
 
   .text-card-stage {
-    position: sticky;
-    top: 50vh;
-    transform: translateY(-50%);
-    padding: 24px 0;
-    box-sizing: border-box;
-    z-index: 2;
-    pointer-events: none;
+    display: none;
   }
 
   .text-card-stack {
@@ -856,8 +835,9 @@
   }
 
   .step-card-scroll {
-    visibility: hidden;
-    pointer-events: none;
+    visibility: visible;
+    pointer-events: auto;
+    opacity: 0.42;
   }
 
   .story-note-card {
@@ -931,10 +911,11 @@
     border-color: rgba(59, 130, 246, 0.45);
     box-shadow: 0 24px 48px rgba(37, 99, 235, 0.12);
     transform: translateY(-6px) scale(1.01);
+    opacity: 1;
   }
 
   .step-card.past {
-    opacity: 0.7;
+    opacity: 0.28;
   }
 
   .step-index {
@@ -1131,6 +1112,30 @@
     min-height: calc(100% - 72px);
     position: relative;
     z-index: 1;
+  }
+
+  .viz-transition-layer {
+    opacity: 1;
+    transform: translateY(0);
+    filter: none;
+    transition:
+      opacity 360ms ease,
+      transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
+      filter 360ms ease;
+    will-change: opacity, transform, filter;
+  }
+
+  .viz-step-transitioning {
+    opacity: 0.34;
+    filter: saturate(0.82);
+  }
+
+  .viz-step-transitioning.transition-forward {
+    transform: translateY(12px);
+  }
+
+  .viz-step-transitioning.transition-backward {
+    transform: translateY(-12px);
   }
 
   .chart-shell {
