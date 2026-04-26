@@ -5,10 +5,11 @@
   import BumpChart from '$lib/components/BumpChart.svelte';
   import DetailLinePlot from '$lib/components/DetailLinePlot.svelte';
   import USStrokeMortalityMapV2 from '$lib/components/USStrokeMortalityMapV2.svelte';
+  import USStrokeMortalityMap3D from '$lib/components/USStrokeMortalityMap3D.svelte';
 
   import { selectedState, selectedYear } from '$lib/stores';
 
-  const HANDOFF_STEP = 13;
+  const HANDOFF_STEP = 14;
   const INTRO_ENTRY_SCROLL = 60;
   const INTRO_RETURN_THRESHOLD = 28;
   const STEP_PROGRESS_TRANSITION_MS = 90;
@@ -61,42 +62,48 @@
     },
     {
       step: 7,
+      section: 'vis2',
+      title: 'See It in 3D',
+      text: "A 3D relief of the same 2019 landscape: each state's height and red tint both encode its mortality, so the Southeast cluster physically rises above the rest. Click any state to highlight it; drag to rotate, scroll to zoom."
+    },
+    {
+      step: 8,
       section: 'vis3',
       title: 'Mississippi Baseline',
       text: "The final chart starts with Mississippi's overall mortality trend as a single line. That clean baseline makes each later comparison easier to read."
     },
     {
-      step: 8,
+      step: 9,
       section: 'vis3',
       title: 'Sex 35-64: Full Comparison',
       text: 'The plot switches to sex for ages 35-64. Lines for overall, men, and women appear one by one to build the gender comparison gradually.'
     },
     {
-      step: 9,
+      step: 10,
       section: 'vis3',
       title: 'Race 35-64: Overall',
       text: 'The view resets to race for ages 35-64 and again starts from the overall line.'
     },
     {
-      step: 10,
+      step: 11,
       section: 'vis3',
       title: 'Race 35-64: Full Comparison',
       text: 'Race subgroup lines appear one by one, and the newest or hovered subgroup stays emphasized so the comparison remains readable as the full set comes in.'
     },
     {
-      step: 11,
+      step: 12,
       section: 'vis3',
       title: 'County 35-64: State Average',
       text: 'The chart resets to county mode for ages 35-64 and starts with the state average only.'
     },
     {
-      step: 12,
+      step: 13,
       section: 'vis3',
       title: 'County 35-64: Full Comparison',
       text: 'Five suggested counties are revealed one by one against the state average, completing the guided county comparison.'
     },
     {
-      step: 13,
+      step: 14,
       section: 'user',
       title: 'Hand Off to User-Driven Mode',
       text: 'The guided sequence ends here. The viewer can now move into the user-driven dashboard for free exploration.'
@@ -104,7 +111,7 @@
   ];
 
   const totalSteps = storySteps.length;
-  const vis3StartStep = 7;
+  const vis3StartStep = 8;
 
   let currentStep = 0;
   let renderedProgress = 0;
@@ -124,9 +131,9 @@
   $: sectionKey =
     currentStep >= 1 && currentStep <= 4
       ? 'vis1'
-      : currentStep >= 5 && currentStep <= 6
+      : currentStep >= 5 && currentStep <= 7
         ? 'vis2'
-        : currentStep >= 7 && currentStep <= 12
+        : currentStep >= 8 && currentStep <= 13
           ? 'vis3'
           : 'user';
 
@@ -185,18 +192,20 @@
       };
     }
 
-    if (step >= 5 && step <= 6) {
+    if (step >= 5 && step <= 7) {
       return {
         tag: 'VIS2',
         title: 'U.S. Stroke Mortality Map',
         subtitle:
           step === 5
             ? '2019 choropleth with Mississippi highlighted'
-            : 'Animated national change from 1999 to 2019'
+            : step === 6
+              ? 'Animated national change from 1999 to 2019'
+              : '3D bonus view: bar height encodes mortality'
       };
     }
 
-    if (step >= 7 && step <= 12) {
+    if (step >= 8 && step <= 13) {
       const current = storySteps.find((item) => item.step === step);
       return {
         tag: 'VIS3',
@@ -214,8 +223,8 @@
 
   function getThemeClass(step: number) {
     if (step >= 1 && step <= 4) return 'theme-vis1';
-    if (step >= 5 && step <= 6) return 'theme-vis2';
-    if (step >= vis3StartStep && step <= 12) return 'theme-vis3';
+    if (step >= 5 && step <= 7) return 'theme-vis2';
+    if (step >= vis3StartStep && step <= 13) return 'theme-vis3';
     return 'theme-user';
   }
 
@@ -258,7 +267,7 @@
       };
     }
 
-    if (step === 8 || step === 10 || step === 12) {
+    if (step === 9 || step === 11 || step === 13) {
       return {
         label: 'Guided line build',
         title: 'Lines appear gradually',
@@ -341,13 +350,15 @@
       return;
     }
 
-    if (step >= 5 && step <= 6) {
+    if (step >= 5 && step <= 7) {
       selectedState.set('MS');
-      selectedYear.set(step === 5 ? 2019 : null);
+      if (step === 5) selectedYear.set(2019);
+      else if (step === 6) selectedYear.set(null);
+      else selectedYear.set(2019); // step 7: 3D opens on the 2019 snapshot
       return;
     }
 
-    if (step >= 7 && step <= 12) {
+    if (step >= 8 && step <= 13) {
       selectedState.set('MS');
       selectedYear.set(2019);
       return;
@@ -449,8 +460,8 @@
   function handleVizWheel(event: WheelEvent) {
     if (!vizScrollEl || !textColumnEl || currentStep === 0) return;
 
-    // Keep the right panel independently scrollable for steps 1-12.
-    // Only when step 13 is fully expanded and the reader scrolls above the top
+    // Keep the right panel independently scrollable for steps 1-13.
+    // Only when step 14 is fully expanded and the reader scrolls above the top
     // of the right panel do we return control to the story column.
     if (currentStep !== HANDOFF_STEP || !exploding) return;
     if (event.deltaY >= 0) return;
@@ -606,7 +617,11 @@
                 <div class="chart-shell" in:fade={{ duration: 280 }}>
                   <USStrokeMortalityMapV2 storyStep={currentStep} storyMode={true} />
                 </div>
-              {:else if currentStep >= 7 && currentStep <= 12}
+              {:else if currentStep === 7}
+                <div class="chart-shell" in:fade={{ duration: 280 }}>
+                  <USStrokeMortalityMap3D />
+                </div>
+              {:else if currentStep >= 8 && currentStep <= 13}
                 <div class="chart-shell" in:fade={{ duration: 280 }}>
                   <DetailLinePlot storyStep={currentStep} storyMode={true} />
                 </div>
@@ -614,6 +629,7 @@
                 <div class="viz-stage explore-stage">
                   <BumpChart storyMode={false} />
                   <USStrokeMortalityMapV2 storyMode={false} />
+                  <USStrokeMortalityMap3D />
                   <DetailLinePlot storyMode={false} />
                 </div>
               {/if}
