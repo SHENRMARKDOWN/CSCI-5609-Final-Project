@@ -114,6 +114,7 @@
   let progressRafB = 0;
 
   let stepEls: Array<HTMLDivElement | null> = [];
+  let storyBodyEl: HTMLDivElement | null = null;
   let textColumnEl: HTMLDivElement | null = null;
   let vizScrollEl: HTMLDivElement | null = null;
   let exploding = false;
@@ -399,11 +400,13 @@
     }
 
     if (nextStep !== currentStep) {
+      const previousStep = currentStep;
       applyStoryState(nextStep);
       currentStep = nextStep;
 
-      if (nextStep === HANDOFF_STEP && vizScrollEl) {
-        vizScrollEl.scrollTop = 0;
+      if (vizScrollEl) {
+        const maxScrollTop = Math.max(0, vizScrollEl.scrollHeight - vizScrollEl.clientHeight);
+        vizScrollEl.scrollTop = nextStep > previousStep ? 0 : maxScrollTop;
       }
     }
 
@@ -431,39 +434,42 @@
     updateScrollState();
   }
 
-  function handleTextWheel(event: WheelEvent) {
-    if (currentStep === 0 || !textColumnEl) return;
+  function scrollElementByDelta(el: HTMLElement, deltaY: number) {
+    const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+    const currentTop = el.scrollTop;
+    const nextTop = clamp(currentTop + deltaY, 0, maxScrollTop);
 
-    if (maybeReturnToIntro(event.deltaY)) {
-      event.preventDefault();
-      return;
+    el.scrollTop = nextTop;
+    return currentTop + deltaY - nextTop;
+  }
+
+  function shouldUseUnifiedWheel() {
+    if (!storyBodyEl) return false;
+    return window.getComputedStyle(storyBodyEl).position === 'fixed';
+  }
+
+  function handleUnifiedWheel(event: WheelEvent) {
+    if (currentStep === 0 || !textColumnEl) return;
+    if (!shouldUseUnifiedWheel()) return;
+
+    event.preventDefault();
+
+    if (maybeReturnToIntro(event.deltaY)) return;
+
+    let remainingDelta = event.deltaY;
+
+    if (vizScrollEl) {
+      remainingDelta = scrollElementByDelta(vizScrollEl, remainingDelta);
+    }
+
+    if (remainingDelta !== 0) {
+      routeDeltaToStory(remainingDelta);
     }
 
     if (currentStep === 1 && event.deltaY < 0) {
       requestAnimationFrame(() => {
         maybeReturnToIntro(event.deltaY);
       });
-    }
-  }
-
-  function handleVizWheel(event: WheelEvent) {
-    if (!vizScrollEl || !textColumnEl || currentStep === 0) return;
-
-    // Keep the right panel independently scrollable for steps 1-12.
-    // Only when step 13 is fully expanded and the reader scrolls above the top
-    // of the right panel do we return control to the story column.
-    if (currentStep !== HANDOFF_STEP || !exploding) return;
-    if (event.deltaY >= 0) return;
-
-    const projectedScrollTop = vizScrollEl.scrollTop + event.deltaY;
-    if (projectedScrollTop > 0) return;
-
-    event.preventDefault();
-    const leftoverDelta = projectedScrollTop;
-    vizScrollEl.scrollTop = 0;
-
-    if (leftoverDelta !== 0) {
-      routeDeltaToStory(leftoverDelta);
     }
   }
 
@@ -487,8 +493,7 @@
 
     scheduleUpdate();
     textColumnEl?.addEventListener('scroll', scheduleUpdate, { passive: true });
-    textColumnEl?.addEventListener('wheel', handleTextWheel, { passive: false });
-    vizScrollEl?.addEventListener('wheel', handleVizWheel, { passive: false });
+    storyBodyEl?.addEventListener('wheel', handleUnifiedWheel, { passive: false });
     window.addEventListener('scroll', handleWindowScroll, { passive: true });
     window.addEventListener('resize', scheduleUpdate);
 
@@ -497,8 +502,7 @@
       clearProgressRafs();
       if (frame) cancelAnimationFrame(frame);
       textColumnEl?.removeEventListener('scroll', scheduleUpdate);
-      textColumnEl?.removeEventListener('wheel', handleTextWheel);
-      vizScrollEl?.removeEventListener('wheel', handleVizWheel);
+      storyBodyEl?.removeEventListener('wheel', handleUnifiedWheel);
       window.removeEventListener('scroll', handleWindowScroll);
       window.removeEventListener('resize', scheduleUpdate);
     };
@@ -533,7 +537,7 @@
     </div>
   </section>
 
-  <div class="story-body" class:exploding class:active={currentStep > 0}>
+  <div class="story-body" class:exploding class:active={currentStep > 0} bind:this={storyBodyEl}>
     <div class="text-column" bind:this={textColumnEl}>
       {#if currentStep > 0}
         {@const activeStoryStep = storySteps[currentStep - 1]}
@@ -597,7 +601,11 @@
           </div>
 
           {#key sectionKey}
-            <div class="viz-stage" in:fly={{ y: 16, duration: 360 }} out:fade={{ duration: 180 }}>
+            <div
+              class="viz-stage"
+              in:fly={{ y: 22, duration: 480, opacity: 0 }}
+              out:fly={{ y: -16, duration: 220, opacity: 0 }}
+            >
               {#if currentStep >= 1 && currentStep <= 4}
                 <div class="chart-shell" in:fade={{ duration: 280 }}>
                   <BumpChart storyStep={currentStep} storyMode={true} />
