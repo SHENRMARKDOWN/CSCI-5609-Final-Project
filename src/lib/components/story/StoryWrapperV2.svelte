@@ -430,6 +430,7 @@
 
   function scrollTextColumnTowardActiveCenter(deltaY: number) {
     if (!textColumnEl || currentStep <= 0) return deltaY;
+    if (currentStep === HANDOFF_STEP && exploding) return deltaY;
 
     const targetTop = getStepCenterScrollTop(currentStep);
     if (targetTop === null) return deltaY;
@@ -480,6 +481,10 @@
 
     if (vizScrollEl) {
       remainingDelta = scrollElementByDelta(vizScrollEl, remainingDelta);
+    }
+
+    if (currentStep === HANDOFF_STEP && exploding && remainingDelta > 0) {
+      return;
     }
 
     if (remainingDelta !== 0) {
