@@ -375,11 +375,7 @@
       triggerVizTransition(previousStep, nextStep);
 
       if (vizScrollEl) {
-        const maxScrollTop = Math.max(
-          0,
-          vizScrollEl.scrollHeight - vizScrollEl.clientHeight,
-        );
-        vizScrollEl.scrollTop = nextStep > previousStep ? 0 : maxScrollTop;
+        vizScrollEl.scrollTop = 0;
       }
     }
 
