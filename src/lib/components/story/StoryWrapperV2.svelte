@@ -856,7 +856,7 @@
   }
 
   .step {
-    min-height: 100vh;
+    min-height: 50vh;
     display: flex;
     align-items: center;
     padding: 24px 12px;
