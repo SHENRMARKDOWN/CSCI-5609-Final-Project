@@ -2,10 +2,10 @@
   import { onMount } from "svelte";
   import { fade, fly } from "svelte/transition";
 
-  import BumpChart from '$lib/components/BumpChart.svelte';
-  import DetailLinePlot from '$lib/components/DetailLinePlot.svelte';
-  import USStrokeMortalityMapV2 from '$lib/components/USStrokeMortalityMapV2.svelte';
-  import USStrokeMortalityMap3D from '$lib/components/USStrokeMortalityMap3D.svelte';
+  import BumpChart from "$lib/components/BumpChart.svelte";
+  import DetailLinePlot from "$lib/components/DetailLinePlot.svelte";
+  import USStrokeMortalityMapV2 from "$lib/components/USStrokeMortalityMapV2.svelte";
+  import USStrokeMortalityMap3D from "$lib/components/USStrokeMortalityMap3D.svelte";
 
   import { selectedState, selectedYear } from "$lib/stores";
 
@@ -13,8 +13,7 @@
   const INTRO_ENTRY_SCROLL = 60;
   const INTRO_RETURN_THRESHOLD = 28;
   const STEP13_EXPLODE_OFFSET = 40;
-  const VIZ_STEP_TRANSITION_MS = 360;
-  const STEP_CENTER_TOLERANCE = 8;
+  const VIZ_STEP_TRANSITION_MS = 220;
 
   type StorySection = "vis1" | "vis2" | "vis3" | "user";
   type StoryStep = {
@@ -22,6 +21,12 @@
     section: StorySection;
     title: string;
     text: string;
+    prompt?: string;
+    highlight?: {
+      label: string;
+      value: string;
+      caption: string;
+    };
   };
 
   const storySteps: StoryStep[] = [
@@ -30,91 +35,122 @@
       section: "vis1",
       title: "2019 Rank Overview",
       text: "We begin with a 2019 ranking bar chart so the audience first sees where stroke mortality is highest before any motion is introduced.",
+      prompt: "Key question: Which states start at the top in 2019?",
     },
     {
       step: 2,
       section: "vis1",
       title: "From Snapshot to Trend",
       text: "One scroll later, that static ranking expands into a bump chart for 1999-2019. The chart now tells a story of changing positions rather than a single-year order.",
+      prompt: "Watch for: states that move, and states that stay near the top.",
     },
     {
       step: 3,
       section: "vis1",
       title: "Prepare a State Focus",
       text: "A pop-up pauses the viewer and signals that the next move is a state selection. This makes the transition from national comparison to case study feel deliberate.",
+      prompt: "Next: we move from overview to one state-level anchor.",
     },
     {
       step: 4,
       section: "vis1",
       title: "Mississippi Becomes the Guide",
       text: "Mississippi is automatically selected and highlighted. That chosen state anchors the rest of the author-driven story.",
+      prompt: "Story anchor: Mississippi remains highlighted in the next views.",
+      highlight: {
+        label: "Selected state",
+        value: "Mississippi",
+        caption: "This state remains the narrative anchor across the map and detail views.",
+      },
     },
     {
       step: 5,
       section: "vis2",
       title: "Map the 2019 Landscape",
       text: "The map opens on the 2019 national distribution with Mississippi still highlighted, preserving continuity while shifting from rank to geography.",
+      prompt: "Look for: whether Mississippi is isolated or part of a broader regional pattern.",
     },
     {
       step: 6,
       section: "vis2",
       title: "Animate National Change",
       text: "The first map scroll introduces a note and then animates the choropleth from 1999 to 2019 so the audience sees spatial change over time.",
+      prompt: "Watch the year label: the map moves from 1999 to 2019.",
+      highlight: {
+        label: "Animated window",
+        value: "1999 → 2019",
+        caption: "This sweep shows change through time before the story zooms back into a single-year reading.",
+      },
     },
     {
       step: 7,
-      section: 'vis2',
-      title: 'See It in 3D',
-      text: "A 3D relief of the same 2019 landscape: each state's height and red tint both encode its mortality, so the Southeast cluster physically rises above the rest. Click any state to highlight it; drag to rotate, scroll to zoom."
-},
-{
-  step: 8,
-  section: 'vis3',
-  title: 'Mississippi Baseline',
-  text: "The final chart starts with Mississippi's overall mortality trend as a single line. That clean baseline makes each later comparison easier to read."
-},
-{
-  step: 9,
-  section: 'vis3',
-  title: 'Sex 35-64: Full Comparison',
-  text: 'The plot switches to sex for ages 35-64. Lines for overall, men, and women appear one by one to build the gender comparison gradually.'
-},
-{
-  step: 10,
-  section: 'vis3',
-  title: 'Race 35-64: Overall',
-  text: 'The view resets to race for ages 35-64 and again starts from the overall line.'
-},
-{
-  step: 11,
-  section: 'vis3',
-  title: 'Race 35-64: Full Comparison',
-  text: 'Race subgroup lines appear one by one, and the newest or hovered subgroup stays emphasized so the comparison remains readable as the full set comes in.'
-},
-{
-  step: 12,
-  section: 'vis3',
-  title: 'County 35-64: State Average',
-  text: 'The chart resets to county mode for ages 35-64 and starts with the state average only.'
-},
-{
-  step: 13,
-  section: 'vis3',
-  title: 'County 35-64: Full Comparison',
-  text: 'Five suggested counties are revealed one by one against the state average, completing the guided county comparison.'
-},
-{
-  step: 14,
-  section: 'user',
-  title: 'Hand Off to User-Driven Mode',
-  text: 'The guided sequence ends here. The viewer can now move into the user-driven dashboard for free exploration.'
-}
+      section: "vis2",
+      title: "See It in 3D",
+      text: "A 3D relief of the same 2019 landscape: each state's height and red tint both encode its mortality, so the Southeast cluster physically rises above the rest. Click any state to highlight it. Drag to rotate. Scroll continues the story.",
+      prompt: "Interaction: click any state to highlight it. Drag to rotate. Scroll continues the story.",
+    },
+    {
+      step: 8,
+      section: "vis3",
+      title: "Mississippi Baseline",
+      text: "The final chart starts with Mississippi's overall mortality trend as a single line. That clean baseline makes each later comparison easier to read.",
+      prompt: "Baseline: this line is the reference for every later comparison.",
+      highlight: {
+        label: "Reference line",
+        value: "Mississippi overall",
+        caption: "Every later subgroup comparison is introduced against this state-level baseline.",
+      },
+    },
+    {
+      step: 9,
+      section: "vis3",
+      title: "Sex 35-64: Full Comparison",
+      text: "The plot switches to sex for ages 35-64. Lines for overall, men, and women appear one by one to build the gender comparison gradually.",
+      prompt: "Watch for: whether male and female trends separate or converge.",
+    },
+    {
+      step: 10,
+      section: "vis3",
+      title: "Race 35-64: Overall",
+      text: "The view resets to race for ages 35-64 and again starts from the overall line.",
+      prompt: "Reset: begin with the overall line before adding racial subgroups.",
+    },
+    {
+      step: 11,
+      section: "vis3",
+      title: "Race 35-64: Full Comparison",
+      text: "Race subgroup lines appear one by one, and the newest or hovered subgroup stays emphasized so the comparison remains readable as the full set comes in.",
+      prompt: "Interaction: hover a subgroup line to keep it emphasized.",
+    },
+    {
+      step: 12,
+      section: "vis3",
+      title: "County 35-64: State Average",
+      text: "The chart resets to county mode for ages 35-64 and starts with the state average only.",
+      prompt: "Baseline: the state average becomes the comparison line for counties.",
+    },
+    {
+      step: 13,
+      section: "vis3",
+      title: "County 35-64: Full Comparison",
+      text: "Five suggested counties are revealed one by one against the state average, completing the guided county comparison.",
+      prompt: "Watch for: which counties sit above or below the state average.",
+    },
+    {
+      step: 14,
+      section: "user",
+      title: "Hand Off to User-Driven Mode",
+      text: "The guided sequence ends here. The viewer can now move into the user-driven dashboard for free exploration.",
+      prompt: "Now explore freely: use the controls to change state, year, and subgroup.",
+    },
   ];
 
   const totalSteps = storySteps.length;
   const vis3StartStep = 8;
 
   let currentStep = 0;
+  let stepProgress = 0;
+  let frame = 0;
 
   let stepEls: Array<HTMLDivElement | null> = [];
   let storyBodyEl: HTMLDivElement | null = null;
@@ -131,20 +167,17 @@
   let mounted = false;
   let userModeSettled = false;
   let userModeSettledTimer = 0;
-  let scrollLocked = false;
-
-  let sectionKey: StorySection = "user";
-  $: sectionKey =
-  currentStep >= 1 && currentStep <= 4
-    ? 'vis1'
-    : currentStep >= 5 && currentStep <= 7
-      ? 'vis2'
-      : currentStep >= 8 && currentStep <= 13
-        ? 'vis3'
-        : 'user';
 
   function clamp(value: number, min = 0, max = 1) {
     return Math.min(max, Math.max(min, value));
+  }
+
+  function getVizComponentKey(step: number) {
+    if (step >= 1 && step <= 4) return "bump";
+    if (step >= 5 && step <= 6) return "map2d";
+    if (step === 7) return "map3d";
+    if (step >= 8 && step <= 13) return "detail-line";
+    return "handoff";
   }
 
   function getVizMeta(step: number) {
@@ -163,16 +196,22 @@
       };
     }
 
-    if (step >= 5 && step <= 7) {
+    if (step >= 5 && step <= 6) {
       return {
         tag: "VIS2",
         title: "U.S. Stroke Mortality Map",
         subtitle:
           step === 5
-            ? '2019 choropleth with Mississippi highlighted'
-            : step === 6
-              ? 'Animated national change from 1999 to 2019'
-              : '3D bonus view: bar height encodes mortality'
+            ? "2019 choropleth with Mississippi highlighted"
+            : "Animated national change from 1999 to 2019",
+      };
+    }
+
+    if (step === 7) {
+      return {
+        tag: "VIS2",
+        title: "U.S. Stroke Mortality Map",
+        subtitle: "Guided 3D relief with click highlight and drag rotation",
       };
     }
 
@@ -193,59 +232,90 @@
   }
 
   function getThemeClass(step: number) {
-    if (step >= 1 && step <= 4) return 'theme-vis1';
-    if (step >= 5 && step <= 7) return 'theme-vis2';
-    if (step >= vis3StartStep && step <= 13) return 'theme-vis3';
-    return 'theme-user';
+    if (step >= 1 && step <= 4) return "theme-vis1";
+    if (step >= 5 && step <= 7) return "theme-vis2";
+    if (step >= vis3StartStep && step <= 13) return "theme-vis3";
+    return "theme-user";
   }
 
-  function getStepNote(step: number) {
-    if (step === 2) {
-      return {
-        label: "Transition",
-        title: "From bars to bump chart",
-        text: "The 2019 bars expand into a full 1999-2019 ranking story.",
-        tone: "blue",
-      };
-    }
+  function getBridge(step: number) {
+    const bridges: Record<number, { text: string; height: number }> = {
+      1: {
+        height: 35,
+        text: "Keep this ranking in mind: it gives us a starting order, but not a trajectory. The next view asks whether high-ranked states stayed high across time.",
+      },
+      2: {
+        height: 55,
+        text: "Before choosing one state, pause on the movement. Some states shift position, while others remain near the top. A guided case study will make the national pattern more concrete.",
+      },
+      3: {
+        height: 40,
+        text: "Rather than ask the viewer to choose randomly, the story selects one consistently high-burden state so every later view has a clear anchor.",
+      },
+      4: {
+        height: 45,
+        text: "Mississippi now becomes the reference point. The next question is geographic: where does this state sit within the national landscape?",
+      },
+      5: {
+        height: 50,
+        text: "The 2019 map shows where the burden remains. But a single map cannot show whether the country has improved over time.",
+      },
+      6: {
+        height: 90,
+        text: "By the end of the animation, the country is lighter than it was in 1999. The important question becomes: even after improvement, which places still stand out?",
+      },
+      7: {
+        height: 70,
+        text: "The 3D view is a reading aid, not a new statistic: height and color repeat the same mortality signal so regional peaks are easier to notice. Try rotating once, then continue.",
+      },
+      8: {
+        height: 45,
+        text: "Mississippi’s state-average line sets the baseline. The next question asks whether that average hides differences between groups.",
+      },
+      9: {
+        height: 70,
+        text: "The sex comparison gives one slice of disparity. Now we keep the same age group and ask whether racial subgroup patterns tell a different story.",
+      },
+      10: {
+        height: 50,
+        text: "Start with the overall race view first, then let the subgroup lines enter gradually so the comparison does not become visual noise.",
+      },
+      11: {
+        height: 70,
+        text: "Once all race subgroup lines are visible, look for whether the gap narrows, persists, or changes shape over time.",
+      },
+      12: {
+        height: 50,
+        text: "The county view moves from subgroup identity to place within Mississippi. The state average becomes a baseline for local comparison.",
+      },
+      13: {
+        height: 80,
+        text: "The guided story has built from national rank to local detail. The final handoff keeps the same encodings, but gives control back to the viewer.",
+      },
+    };
 
-    if (step === 3) {
-      return {
-        label: "Next step",
-        title: "Choose one state",
-        text: "The story is about to move from national movement to one guided state case so the audience can stay oriented.",
-        tone: "blue",
-      };
-    }
+    return bridges[step] ?? null;
+  }
 
-    if (step === 4) {
-      return {
-        label: "Story focus",
-        title: "Mississippi",
-        text: "Mississippi now anchors the rest of the narrative across the map and subgroup views.",
-        tone: "rose",
-      };
-    }
+  function getStepMinHeight(step: number) {
+    const pacing: Record<number, number> = {
+      1: 85,
+      2: 105,
+      3: 85,
+      4: 95,
+      5: 95,
+      6: 130,
+      7: 120,
+      8: 95,
+      9: 125,
+      10: 95,
+      11: 125,
+      12: 95,
+      13: 135,
+      14: 100,
+    };
 
-    if (step === 6) {
-      return {
-        label: "Animation",
-        title: "Watch the national pattern change",
-        text: "This step animates the map from 1999 to 2019 so the audience reads change over time instead of a single-year snapshot.",
-        tone: "amber",
-      };
-    }
-
-    if (step === 9 || step === 11 || step === 13) {
-      return {
-        label: "Guided line build",
-        title: "Lines appear gradually",
-        text: "Each subgroup line is added one by one within this step.",
-        tone: "emerald",
-      };
-    }
-
-    return null;
+    return pacing[step] ?? 90;
   }
 
   function clearIntroTimer() {
@@ -258,6 +328,12 @@
     if (!vizTransitionTimer) return;
     window.clearTimeout(vizTransitionTimer);
     vizTransitionTimer = 0;
+  }
+
+  function clearUserModeSettledTimer() {
+    if (!userModeSettledTimer) return;
+    window.clearTimeout(userModeSettledTimer);
+    userModeSettledTimer = 0;
   }
 
   function triggerVizTransition(previousStep: number, nextStep: number) {
@@ -274,13 +350,15 @@
   function resetToIntro() {
     clearIntroTimer();
     clearVizTransitionTimer();
+    clearUserModeSettledTimer();
+
     currentStep = 0;
+    stepProgress = 0;
     introHidden = false;
     exploding = false;
     vizTransitioning = false;
+    userMode = false;
     userModeSettled = false;
-
-    if (userModeSettledTimer) { window.clearTimeout(userModeSettledTimer); userModeSettledTimer = 0; }
 
     if (textColumnEl) {
       textColumnEl.scrollTop = 0;
@@ -298,7 +376,14 @@
 
     clearIntroTimer();
     clearVizTransitionTimer();
+    clearUserModeSettledTimer();
+
     currentStep = 1;
+    stepProgress = 0;
+    exploding = false;
+    userMode = false;
+    userModeSettled = false;
+
     applyStoryState(1);
     vizTransitioning = false;
 
@@ -314,6 +399,8 @@
       introHidden = true;
       introTimer = 0;
     }, 400);
+
+    scheduleUpdate();
   }
 
   function applyStoryState(step: number) {
@@ -334,19 +421,22 @@
         selectedYear.set(null);
         selectedState.set("MS");
       }
+
       return;
     }
 
     if (step >= 5 && step <= 7) {
-      selectedState.set('MS');
+      selectedState.set("MS");
+
       if (step === 5) selectedYear.set(2019);
       else if (step === 6) selectedYear.set(null);
-      else selectedYear.set(2019); // step 7: 3D opens on the 2019 snapshot
+      else selectedYear.set(2019);
+
       return;
     }
 
     if (step >= 8 && step <= 13) {
-      selectedState.set('MS');
+      selectedState.set("MS");
       selectedYear.set(2019);
       return;
     }
@@ -357,42 +447,61 @@
     }
   }
 
+  function scheduleUpdate() {
+    if (frame) return;
+
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      updateScrollState();
+    });
+  }
+
   function updateScrollState() {
     if (currentStep === 0 || !textColumnEl) return;
 
     const validStepEls = stepEls.filter(Boolean) as HTMLDivElement[];
-    if (validStepEls.length === 0) {
-      resetToIntro();
-      return;
-    }
+    if (validStepEls.length === 0) return;
 
     const scrollTop = textColumnEl.scrollTop;
     const viewH = textColumnEl.clientHeight || window.innerHeight;
-    const triggerY = scrollTop + viewH * 0.42;
+    const triggerY = scrollTop + viewH * 0.55;
 
-    const stepPositions = validStepEls.map((el) => el.offsetTop);
-    const firstStepTop = stepPositions[0] ?? 0;
+    let activeIndex = 0;
 
-    let nextStep = 1;
+    for (let i = 0; i < validStepEls.length; i += 1) {
+      const top = validStepEls[i].offsetTop;
+      const nextTop = validStepEls[i + 1]?.offsetTop ?? Number.POSITIVE_INFINITY;
 
-    if (triggerY < firstStepTop) {
-      nextStep = 1;
-    } else {
-      let activeIndex = stepPositions.findIndex((top, index) => {
-        const nextTop = stepPositions[index + 1] ?? Number.POSITIVE_INFINITY;
-        return triggerY >= top && triggerY < nextTop;
-      });
+      if (triggerY >= top && triggerY < nextTop) {
+        activeIndex = i;
+        break;
+      }
 
-      if (activeIndex === -1) activeIndex = stepPositions.length - 1;
-
-      nextStep = storySteps[activeIndex]?.step ?? 1;
+      if (triggerY >= top) {
+        activeIndex = i;
+      }
     }
+
+    const activeEl = validStepEls[activeIndex];
+    const nextEl = validStepEls[activeIndex + 1];
+
+    const start = activeEl.offsetTop;
+    const end =
+      nextEl?.offsetTop ??
+      activeEl.offsetTop + activeEl.offsetHeight + textColumnEl.clientHeight * 0.8;
+
+    stepProgress = clamp((triggerY - start) / Math.max(1, end - start), 0, 1);
+
+    const nextStep = storySteps[activeIndex]?.step ?? 1;
 
     if (nextStep !== currentStep) {
       const previousStep = currentStep;
       applyStoryState(nextStep);
       currentStep = nextStep;
-      triggerVizTransition(previousStep, nextStep);
+
+      if (getVizComponentKey(previousStep) !== getVizComponentKey(nextStep)) {
+        triggerVizTransition(previousStep, nextStep);
+      }
 
       if (vizScrollEl) {
         vizScrollEl.scrollTop = 0;
@@ -400,21 +509,24 @@
     }
 
     const lastStepEl = validStepEls[validStepEls.length - 1];
-const lastStepBottom = (lastStepEl?.offsetTop ?? 0) + (lastStepEl?.offsetHeight ?? 0);
-exploding =
-  nextStep === HANDOFF_STEP &&
-  scrollTop + viewH > lastStepBottom + STEP13_EXPLODE_OFFSET;
+    const lastStepBottom =
+      (lastStepEl?.offsetTop ?? 0) + (lastStepEl?.offsetHeight ?? 0);
 
-if (nextStep === HANDOFF_STEP && !userMode) {
-  userMode = true;
-  userModeSettledTimer = window.setTimeout(() => {
-    userModeSettled = true;
-    const userSection = document.getElementById('user-section');
-    if (userSection) {
-      userSection.scrollIntoView({ behavior: 'smooth' });
+    exploding =
+      nextStep === HANDOFF_STEP &&
+      scrollTop + viewH > lastStepBottom + STEP13_EXPLODE_OFFSET;
+
+    if (exploding && !userMode) {
+      userMode = true;
+      clearUserModeSettledTimer();
+      userModeSettledTimer = window.setTimeout(() => {
+        userModeSettled = true;
+        const userSection = document.getElementById("user-section");
+        if (userSection) {
+          userSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
     }
-  }, 100);
-}
   }
 
   function maybeReturnToIntro(deltaY: number) {
@@ -426,189 +538,88 @@ if (nextStep === HANDOFF_STEP && !userMode) {
     return true;
   }
 
-  function routeDeltaToStory(deltaY: number) {
-    if (!textColumnEl) return;
-
-    const nextTop = Math.max(0, textColumnEl.scrollTop + deltaY);
-    textColumnEl.scrollTo({
-      top: nextTop,
-      behavior: shouldUseUnifiedWheel() ? "smooth" : "auto",
-    });
-    updateScrollState();
-  }
-
-  function getStepCenterScrollTop(step: number) {
-    if (!textColumnEl) return null;
-
-    const stepEl = stepEls[step - 1];
-    if (!stepEl) return null;
-
-    const maxScrollTop = Math.max(
-      0,
-      textColumnEl.scrollHeight - textColumnEl.clientHeight,
-    );
-    const centeredTop =
-      stepEl.offsetTop +
-      stepEl.offsetHeight / 2 -
-      textColumnEl.clientHeight / 2;
-    return clamp(centeredTop, 0, maxScrollTop);
-  }
-
-  function scrollTextColumnTowardActiveCenter(deltaY: number) {
-    if (!textColumnEl || currentStep <= 0) return deltaY;
-    if (currentStep === HANDOFF_STEP && exploding) return deltaY;
-
-    const targetTop = getStepCenterScrollTop(currentStep);
-    if (targetTop === null) return deltaY;
-
-    const currentTop = textColumnEl.scrollTop;
-    const distanceToCenter = targetTop - currentTop;
-
-    if (Math.abs(distanceToCenter) <= STEP_CENTER_TOLERANCE) return deltaY;
-    if (Math.sign(deltaY) !== Math.sign(distanceToCenter)) return deltaY;
-
-    const stepTowardCenter =
-      Math.sign(deltaY) *
-      Math.min(Math.abs(deltaY), Math.abs(distanceToCenter));
-    textColumnEl.scrollTo({
-      top: currentTop + stepTowardCenter,
-      behavior: shouldUseUnifiedWheel() ? "smooth" : "auto",
-    });
-    updateScrollState();
-
-    return deltaY - stepTowardCenter;
-  }
-
-  function scrollElementByDelta(el: HTMLElement, deltaY: number) {
-    const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
-    const currentTop = el.scrollTop;
-    const nextTop = clamp(currentTop + deltaY, 0, maxScrollTop);
-
-    el.scrollTop = nextTop;
-    return currentTop + deltaY - nextTop;
-  }
-
   function shouldUseUnifiedWheel() {
     if (!storyBodyEl) return false;
     return window.getComputedStyle(storyBodyEl).position === "fixed";
   }
 
   function handleUnifiedWheel(event: WheelEvent) {
-  if (currentStep === 0 || !textColumnEl) return;
-  if (!shouldUseUnifiedWheel()) return;
+    if (currentStep === 0 || !textColumnEl) return;
+    if (!shouldUseUnifiedWheel()) return;
 
-  event.preventDefault();
+    const target = event.target as HTMLElement;
 
-  if (scrollLocked) return;
-  if (Math.abs(event.deltaY) < 30) return;
+    if (target.closest(".text-column")) {
+      return;
+    }
 
-  scrollLocked = true;
-  window.setTimeout(() => { scrollLocked = false; }, 1000);
-
-  if (maybeReturnToIntro(event.deltaY)) return;
-
-  const direction = event.deltaY > 0 ? 1 : -1;
-  const targetStep = Math.min(totalSteps, Math.max(1, currentStep + direction));
-  const targetEl = stepEls[targetStep - 1];
-
-  if (!targetEl) return;
-
-  const previousStep = currentStep;
-  currentStep = targetStep;
-  applyStoryState(targetStep);
-  triggerVizTransition(previousStep, targetStep);
-
-  if (targetStep === HANDOFF_STEP && !userMode) {
-    userMode = true;
-    userModeSettledTimer = window.setTimeout(() => {
-      userModeSettled = true;
-      const userSection = document.getElementById('user-section');
-      if (userSection) userSection.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-    return;
-  }
-
-  textColumnEl.scrollTo({
-    top: targetEl.offsetTop + targetEl.offsetHeight / 2 - textColumnEl.clientHeight / 2,
-    behavior: 'smooth'
-  });
-}
-  function handleVizWheel(event: WheelEvent) {
-    if (!vizScrollEl || !textColumnEl || currentStep === 0) return;
-
-    // Keep the right panel independently scrollable for steps 1-13.
-    // Only when step 14 is fully expanded and the reader scrolls above the top
-    // of the right panel do we return control to the story column.
-    if (currentStep !== HANDOFF_STEP || !exploding) return;
-    if (event.deltaY >= 0) return;
-
-    const projectedScrollTop = vizScrollEl.scrollTop + event.deltaY;
-    if (projectedScrollTop > 0) return;
+    if (userModeSettled) {
+      return;
+    }
 
     event.preventDefault();
-    const leftoverDelta = projectedScrollTop;
-    vizScrollEl.scrollTop = 0;
 
-    if (leftoverDelta !== 0) {
-      routeDeltaToStory(leftoverDelta);
+    if (maybeReturnToIntro(event.deltaY)) return;
+
+    textColumnEl.scrollTop = Math.max(0, textColumnEl.scrollTop + event.deltaY);
+    scheduleUpdate();
+  }
+
+  function handleTextColumnWheelForIntro(event: WheelEvent) {
+    if (!textColumnEl) return;
+
+    if (
+      currentStep === 1 &&
+      event.deltaY < 0 &&
+      textColumnEl.scrollTop <= INTRO_RETURN_THRESHOLD
+    ) {
+      event.preventDefault();
+      maybeReturnToIntro(event.deltaY);
+    }
+  }
+
+  function handleWindowScroll() {
+    if (currentStep === 0 && window.scrollY > INTRO_ENTRY_SCROLL) {
+      startStoryFromIntro();
+    }
+  }
+
+  function handleUserSectionScroll() {
+    if (userMode && userModeSettled && window.scrollY < 50) {
+      resetToIntro();
     }
   }
 
   onMount(() => {
     mounted = true;
     window.scrollTo(0, 0);
-    let frame = 0;
-
-    const scheduleUpdate = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        updateScrollState();
-      });
-    };
-
-    const handleWindowScroll = () => {
-      if (currentStep === 0 && window.scrollY > INTRO_ENTRY_SCROLL) {
-        startStoryFromIntro();
-      }
-    };
-
-    const handleUserSectionScroll = () => {
-  if (userMode && userModeSettled && window.scrollY < 50) {
-    userMode = false;
-    userModeSettled = false;
-    resetToIntro();
-  }
-};
-
-    
 
     scheduleUpdate();
-    window.addEventListener("scroll", handleUserSectionScroll, { passive: true });
 
-    let scrollEndTimer = 0;
-textColumnEl?.addEventListener("scroll", () => {
-  if (scrollLocked) return;
-  if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
-  scrollEndTimer = window.setTimeout(() => {
-    scheduleUpdate();
-  }, 400);
-}, { passive: true });
-
+    textColumnEl?.addEventListener("scroll", scheduleUpdate, { passive: true });
+    textColumnEl?.addEventListener("wheel", handleTextColumnWheelForIntro, {
+      passive: false,
+    });
     storyBodyEl?.addEventListener("wheel", handleUnifiedWheel, {
       passive: false,
     });
+
     window.addEventListener("scroll", handleWindowScroll, { passive: true });
+    window.addEventListener("scroll", handleUserSectionScroll, { passive: true });
     window.addEventListener("resize", scheduleUpdate);
 
     return () => {
       clearIntroTimer();
-      window.removeEventListener("scroll", handleUserSectionScroll);
       clearVizTransitionTimer();
+      clearUserModeSettledTimer();
       if (frame) cancelAnimationFrame(frame);
+
       textColumnEl?.removeEventListener("scroll", scheduleUpdate);
+      textColumnEl?.removeEventListener("wheel", handleTextColumnWheelForIntro);
       storyBodyEl?.removeEventListener("wheel", handleUnifiedWheel);
+
       window.removeEventListener("scroll", handleWindowScroll);
+      window.removeEventListener("scroll", handleUserSectionScroll);
       window.removeEventListener("resize", scheduleUpdate);
     };
   });
@@ -641,38 +652,14 @@ textColumnEl?.addEventListener("scroll", () => {
   bind:this={storyBodyEl}
 >
     <div class="text-column" bind:this={textColumnEl}>
-      {#if currentStep > 0}
-        {@const activeStoryStep = storySteps[currentStep - 1]}
-        {@const stepNote = getStepNote(currentStep)}
-        <div class="text-card-stage">
-          {#key `text-${currentStep}`}
-            <div
-              class="text-card-stack"
-              in:fade={{ duration: 280 }}
-              out:fade={{ duration: 180 }}
-            >
-              <div class="step-card step-card-fixed active">
-                <div class="step-index">{activeStoryStep.step}</div>
-                <p class="section-tag">
-                  {activeStoryStep.section.toUpperCase()}
-                </p>
-                <h2 class="step-title">{activeStoryStep.title}</h2>
-                <p class="step-copy">{activeStoryStep.text}</p>
-              </div>
-              {#if stepNote}
-                <div class={`story-note-card ${stepNote.tone}`}>
-                  <p class="story-note-label">{stepNote.label}</p>
-                  <h3 class="story-note-title">{stepNote.title}</h3>
-                  <p class="story-note-text">{stepNote.text}</p>
-                </div>
-              {/if}
-            </div>
-          {/key}
-        </div>
-      {/if}
-
       {#each storySteps as item, i}
-        <div class="step" data-step={item.step} bind:this={stepEls[i]}>
+        {@const bridge = getBridge(item.step)}
+        <div
+          class="step"
+          data-step={item.step}
+          bind:this={stepEls[i]}
+          style={`--step-min-height: ${getStepMinHeight(item.step)}vh;`}
+        >
           <div
             class="step-card step-card-scroll"
             class:active={currentStep === item.step}
@@ -682,8 +669,30 @@ textColumnEl?.addEventListener("scroll", () => {
             <p class="section-tag">{item.section.toUpperCase()}</p>
             <h2 class="step-title">{item.title}</h2>
             <p class="step-copy">{item.text}</p>
+
+            {#if item.highlight}
+              <div class="key-highlight">
+                <p class="highlight-label">{item.highlight.label}</p>
+                <p class="highlight-value">{item.highlight.value}</p>
+                <p class="highlight-caption">{item.highlight.caption}</p>
+              </div>
+            {/if}
+
+            {#if item.prompt}
+              <p class="interaction-prompt">{item.prompt}</p>
+            {/if}
           </div>
         </div>
+
+        {#if bridge}
+          <div
+            class="step-bridge"
+            style={`--bridge-height: ${bridge.height}vh;`}
+          >
+            <p class="bridge-label">Transition</p>
+            <p class="bridge-text">{bridge.text}</p>
+          </div>
+        {/if}
       {/each}
 
       <div style="height: 60vh;"></div>
@@ -694,22 +703,16 @@ textColumnEl?.addEventListener("scroll", () => {
         <div class="panel-glow" aria-hidden="true"></div>
         <div class="viz-scroll" bind:this={vizScrollEl}>
           <div class="viz-header">
-            {#key `header-${currentStep}`}
-              <div
-                class="viz-header-content"
-                in:fade={{ duration: 280 }}
-                out:fade={{ duration: 180 }}
-              >
-                <div class="viz-title-block">
-                  <p class="viz-tag">{getVizMeta(currentStep).tag}</p>
-                  <h3>{getVizMeta(currentStep).title}</h3>
-                </div>
-                <div class="viz-meta">
-                  <p class="viz-progress">Step {currentStep} / {totalSteps}</p>
-                  <p class="viz-subtitle">{getVizMeta(currentStep).subtitle}</p>
-                </div>
+            <div class="viz-header-content">
+              <div class="viz-title-block">
+                <p class="viz-tag">{getVizMeta(currentStep).tag}</p>
+                <h3>{getVizMeta(currentStep).title}</h3>
               </div>
-            {/key}
+              <div class="viz-meta">
+                <p class="viz-progress">Step {currentStep} / {totalSteps}</p>
+                <p class="viz-subtitle">{getVizMeta(currentStep).subtitle}</p>
+              </div>
+            </div>
           </div>
 
 <div
@@ -718,32 +721,45 @@ textColumnEl?.addEventListener("scroll", () => {
   class:transition-forward={vizTransitionDirection === "forward"}
   class:transition-backward={vizTransitionDirection === "backward"}
 >
-  {#key sectionKey}
+  {#key getVizComponentKey(currentStep)}
     <div
       class="viz-stage"
-      in:fly={{ y: 22, duration: 480, opacity: 0 }}
-      out:fly={{ y: -16, duration: 220, opacity: 0 }}
+      in:fade={{ duration: 160 }}
+      out:fade={{ duration: 120 }}
     >
       {#if currentStep >= 1 && currentStep <= 4}
         <div class="chart-shell" in:fade={{ duration: 280 }}>
-          <BumpChart storyStep={currentStep} storyMode={true} />
+          <BumpChart
+            storyStep={currentStep}
+            storyMode={true}
+            storyProgress={stepProgress}
+          />
         </div>
       {:else if currentStep >= 5 && currentStep <= 6}
         <div class="chart-shell" in:fade={{ duration: 280 }}>
           <USStrokeMortalityMapV2
             storyStep={currentStep}
             storyMode={true}
+            storyProgress={stepProgress}
           />
         </div>
 
       {:else if currentStep === 7}
         <div class="chart-shell" in:fade={{ duration: 280 }}>
-          <USStrokeMortalityMap3D />
+          <USStrokeMortalityMap3D
+            storyMode={true}
+            showYearSlider={false}
+            storyProgress={stepProgress}
+          />
         </div>
 
       {:else if currentStep >= 8 && currentStep <= 13}
         <div class="chart-shell" in:fade={{ duration: 280 }}>
-          <DetailLinePlot storyStep={currentStep} storyMode={true} />
+          <DetailLinePlot
+            storyStep={currentStep}
+            storyMode={true}
+            storyProgress={stepProgress}
+          />
         </div>
 
       {:else if currentStep === HANDOFF_STEP}
@@ -761,16 +777,15 @@ textColumnEl?.addEventListener("scroll", () => {
   <div style="height: 200vh; pointer-events: none;" aria-hidden="true"></div>
 </div>
 
-{#if mounted}
-<section id="user-section" class="user-section" class:user-mode-active={userMode}>
-
-  <div class="user-section-inner">
-    <BumpChart storyMode={false} />
-    <USStrokeMortalityMapV2 storyMode={false} />
-    <USStrokeMortalityMap3D />
-    <DetailLinePlot storyMode={false} />
-  </div>
-</section>
+{#if mounted && userMode}
+  <section id="user-section" class="user-section">
+    <div class="user-section-inner">
+      <BumpChart storyMode={false} />
+      <USStrokeMortalityMapV2 storyMode={false} />
+      <USStrokeMortalityMap3D storyMode={false} />
+      <DetailLinePlot storyMode={false} />
+    </div>
+  </section>
 {/if}
 
 <style>
@@ -928,7 +943,8 @@ textColumnEl?.addEventListener("scroll", () => {
     box-sizing: border-box;
     padding: 0 12px 0 24px;
     flex-shrink: 0;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
+    overscroll-behavior-y: contain;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     transition:
@@ -945,22 +961,37 @@ textColumnEl?.addEventListener("scroll", () => {
     overflow: hidden;
   }
 
-  .text-card-stage {
-    display: none;
-  }
-
-  .text-card-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
   .step {
-    min-height: 50vh;
+    min-height: var(--step-min-height, 90vh);
     display: flex;
     align-items: center;
-    padding: 24px 12px;
+    padding: 28px 12px;
     box-sizing: border-box;
+  }
+
+  .step-bridge {
+    min-height: var(--bridge-height, 40vh);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 12px 20px 36px;
+    box-sizing: border-box;
+    color: #475569;
+  }
+
+  .bridge-label {
+    margin: 0 0 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .bridge-text {
+    margin: 0;
+    font-size: 0.98rem;
+    line-height: 1.75;
   }
 
   .step-card {
@@ -982,80 +1013,10 @@ textColumnEl?.addEventListener("scroll", () => {
       opacity 280ms ease;
   }
 
-  .step-card-fixed {
-    pointer-events: auto;
-  }
-
   .step-card-scroll {
     visibility: visible;
     pointer-events: auto;
     opacity: 0.42;
-  }
-
-  .story-note-card {
-    padding: 18px 20px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(203, 213, 225, 0.9);
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-    backdrop-filter: blur(8px);
-    pointer-events: auto;
-  }
-
-  .story-note-card.blue {
-    border-color: rgba(96, 165, 250, 0.45);
-    background: rgba(239, 246, 255, 0.9);
-  }
-
-  .story-note-card.rose {
-    border-color: rgba(244, 114, 182, 0.35);
-    background: rgba(255, 241, 242, 0.94);
-  }
-
-  .story-note-card.amber {
-    border-color: rgba(251, 191, 36, 0.4);
-    background: rgba(255, 251, 235, 0.94);
-  }
-
-  .story-note-card.emerald {
-    border-color: rgba(52, 211, 153, 0.35);
-    background: rgba(236, 253, 245, 0.94);
-  }
-
-  .story-note-label {
-    margin: 0 0 8px 0;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #1d4ed8;
-  }
-
-  .story-note-card.rose .story-note-label {
-    color: #be185d;
-  }
-
-  .story-note-card.amber .story-note-label {
-    color: #b45309;
-  }
-
-  .story-note-card.emerald .story-note-label {
-    color: #047857;
-  }
-
-  .story-note-title {
-    margin: 0 0 8px 0;
-    font-size: 1.05rem;
-    font-weight: 800;
-    line-height: 1.3;
-    color: #0f172a;
-  }
-
-  .story-note-text {
-    margin: 0;
-    font-size: 0.96rem;
-    line-height: 1.68;
-    color: #334155;
   }
 
   .step-card.active {
@@ -1130,6 +1091,47 @@ textColumnEl?.addEventListener("scroll", () => {
 
   .step-card.active .step-copy {
     transition-delay: 40ms;
+  }
+
+  .key-highlight {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(248, 250, 252, 0.95);
+    border: 1px solid rgba(203, 213, 225, 0.9);
+  }
+
+  .highlight-label {
+    margin: 0 0 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .highlight-value {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 850;
+    color: #0f172a;
+  }
+
+  .highlight-caption {
+    margin: 6px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #475569;
+  }
+
+  .interaction-prompt {
+    margin: 18px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid rgba(203, 213, 225, 0.8);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: #1d4ed8;
+    font-weight: 650;
   }
 
   .viz-panel {
@@ -1278,26 +1280,23 @@ textColumnEl?.addEventListener("scroll", () => {
   .viz-transition-layer {
     opacity: 1;
     transform: translateY(0);
-    filter: none;
     transition:
-      opacity 360ms ease,
-      transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
-      filter 360ms ease;
-    will-change: opacity, transform, filter;
+      opacity 220ms ease,
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
     flex: 1; min-height: 0; display: flex; flex-direction: column; /*APR 26*/
   }
 
   .viz-step-transitioning {
-    opacity: 0.34;
-    filter: saturate(0.82);
+    opacity: 0.78;
   }
 
   .viz-step-transitioning.transition-forward {
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
 
   .viz-step-transitioning.transition-backward {
-    transform: translateY(-12px);
+    transform: translateY(-8px);
   }
 
   .chart-shell {
@@ -1393,9 +1392,6 @@ textColumnEl?.addEventListener("scroll", () => {
       padding: 40px 32px;
       box-sizing: border-box;
       background: #f8fafc;
-      display: none;
-    }
-    .user-section.user-mode-active {
       display: block;
     }
     .user-section-inner {

@@ -5,7 +5,7 @@
   import { get } from "svelte/store";
   import { selectedState, selectedYear } from "$lib/stores";
   import { asset } from "$app/paths";
-  let { storyStep = null, storyMode = false } = $props();
+  let { storyStep = null, storyMode = false, storyProgress = 0 } = $props();
   
   let svg: SVGSVGElement;
   let selectedRegion = $state("All"); //place holder for selected region, default to "All"
@@ -208,6 +208,9 @@
     Southwest: d3.schemeYlOrBr[6],
     West: d3.schemeReds[6],
   };
+  const CHART_WIDTH = 1200;
+  const CHART_HEIGHT = 790;
+  const CHART_MARGIN = { top: 50, right: 80, bottom: 64, left: 180 };
 
   // Higher mortality gets a better (smaller) rank number
   function computeRankWithinRegion(data, region) {
@@ -271,10 +274,10 @@
 
     const currentSelectedState = get(selectedState);
     const currentSelectedYear = get(selectedYear);
-    const margin = { top: 50, right: 80, bottom: 30, left: 180 };// adjust left margin for state labels
+    const margin = CHART_MARGIN;
 
-    const width = 1200;
-    const height = 750;
+    const width = CHART_WIDTH;
+    const height = CHART_HEIGHT;
 
     d3.select(svg).selectAll("*").remove();
 
@@ -387,9 +390,9 @@ const xAxisG = svgEl
     svgEl
       .append("text")
       .attr("x", width / 2)
-      .attr("y", height - 10)
+      .attr("y", height - 16)
       .attr("text-anchor", "middle")
-      .attr("font-size", "20px")
+      .attr("font-size", "18px")
       .attr("fill", "#333")
       .text(currentSelectedYear !== null ? "Mortality Rate" : "Year");
 
@@ -560,7 +563,7 @@ const xAxisG = svgEl
     
     <div class="vis-row">
     <div class="svg-wrapper">
-      <svg bind:this={svg} viewBox="0 0 1200 750" preserveAspectRatio="xMidYMid meet" style="width:100%; height:100%; display:block;"></svg>
+      <svg bind:this={svg} viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} preserveAspectRatio="xMidYMid meet" style="width:100%; height:100%; display:block;"></svg>
     </div>
       <div class="legend-container">
         {#if selectedRegion === "All"}

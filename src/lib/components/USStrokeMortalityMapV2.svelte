@@ -10,6 +10,9 @@
 
   export let storyStep: number | null = null;
   export let storyMode: boolean = false;
+  export let storyProgress: number = 0;
+
+  $: storyProgress;
 
   let showInstructions = false;
 

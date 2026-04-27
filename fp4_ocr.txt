@@ -1,0 +1,978 @@
+===== page-001.png =====
+FP3 Digest & FP4
+Checklist
+
+===== page-002.png =====
+Checklist for your project
+
+Clarity & Readability
+Effectiveness and Expressiveness
+Highlight Your Findings
+
+Invite Interactions
+
+Text Layout
+
+Small-Scale Evaluation
+
+Read the peer reviews!
+
+===== page-003.png =====
+Clarity & Readability
+
+Jan Feb
+
+Is the text easy to read (font size, contrast, placement)?
+Do you chart have legend, axis labels, that clearly explain your visual
+
+encodings
+
+Spring Break " Patrick's Day
+
+Academy Awards
+
+Valentine's Day
+
+Superbowl |
+
+April Fool's Day
+
+Mar Apr
+
+S enhancement of graph by David Mi
+
+Timing of Break-Ups
+Based on status updates of 10,000 Facebook users in 2008
+
+Christmas
+Fall Semester Ends
+|
+Thanksgiving
+
+‘Summer Holiday Starts
+
+Election Day
+
+Mondays
+
+[| | |
+
+Fall Semester Starts
+
+May Jun Jul Aug Sep Oct Nov
+
+Lee Byron (using data estimated from their graph)
+
+===== page-004.png =====
+Over-Aggregation hide information
+
+X Mean: 54.26
+Y Mean: 47.83
+X SD: 16.76
+Y SD : 26.93
+Corr. : -0.06
+
+bimodal uniform normal
+
+ee anne:
+
+te &| ol
+* NUS
+B ae “
+a Z ea
+asl 4 wh o 4
+
+
+===== page-005.png =====
+Overplotting hide information
+
+88
+
+68
+48
+26
+
+a: f 8
+58 166 156 260 58 100 156 268 8 40 868 120 160 200
+
+x x xX
+
+Data Sampling Binned Aggregation
+
+
+===== page-006.png =====
+Overplotting hide information
+
+ee >
+~ oe
+") eS
+
+2016 Presi
+
+MeMultin
+
+idential Election
+
+stein
+
+
+===== page-007.png =====
+Effectiveness and Expressiveness
+
+e Overplotting hide information
+
+BEFORE: SINGLE, OVERPLOTTED SCATTER PLOT
+MPG vs. HORSEPOWER by MANUFACTURER (10 CATEGORIES)
+Toyota, Ford, BMW, Honda, GM, VW, Nissan, Subaru, Hyundai, Mercedes-Benz
+
+OVERLAPPING
+( DATA POINTS
+
+5 oo 85
+UNREADABLE ¢ in & oe ey aie
+CLUSTER ee foe eee
+Too many categories and points create visual clutter. True patterns and relationships within each group are hidden.
+
+AFTER: SMALL MULTIPLES APPROACH (CLEAR view)
+e.g., TOYOTA FORD , BMW vw
+
+40
+
+5 CLEAR “al 5
+© 30 CORRELATION “ aoe
+a 5 ad = j=\Gaa | Meir. a be Pi)
+1
+°> 100 200 300 0 100200. 300 0 100. 200 300 0 100. 200 «300 «0 100 +200 ~~ 300
+40 NISSAN a vw SUBARU HYUNDAI MERCEDES-BENZ
+Es s° a, meee = OUTLIER
+20 wie ae \ oe . NI
+107400 200~«300 «0 100 +200 «900 0 +100 +200. 900 0 100 200. +900 0 100 200 300
+
+HORSEPOWER
+
+===== page-008.png =====
+Concrete examples from a big overview
+
+p> Screenplay Dialogue,
+‘PF Broken-down by Gender
+
+Men have 60%¢ Dialogue Gender Balance, +/- 10%
+
+Frozen smb 57/497
+
+Women have 60%+ Dialogue
+
+Inside Out smu 26% /64%
+
+Alice In
+
+Concrete Examples
+
+eho, —
+
+2,000 Screenplays: Dialogue
+
+Broken-down by Gender
+
+Big Overview Picture
+
+ody | Horror
+
+Search Find o Fin
+
+100% of Words
+
+
+===== page-009.png =====
+Concrete examples from a big overview
+
+HAPPY TOGETHER fe)
+The Tues (1987)
+
+Concrete Examples Big Overview
+Picture
+
+OR
+
+O Gnoone
+‘ea Kej2007)
+QO GcANTHELP FALLING IN LOVE
+
+Ets resi, The Jordans (963)
+
+===== page-010.png =====
+Concrete examples from a big overview
+
+Big Overview Picture
+
+REDDIT COMA
+
+Concrete Examples
+
+@ Anyone who is leaving their child to cry during sleep training is a
+literal monster
+
+{© We did C10 at 4.5 months, &
+
+OPPOSE
+
+leep a day for tho ‘ADMO CATE
+
+e pretty much deliriou:
+
+on sleep trainin
+
+full of life baby to turn into a ‘pretty qu
+
+https://pudding.cool/2024/07/sleep-trainina/
+
+===== page-011.png =====
+Highlight your key findings
+
+Annotation!
+
+Standers are more likely to be exposed to
+extreme heat from things like stoves and fires.
+
+
+===== page-012.png =====
+Highlight your key
+
+findings
+
+Annotation!
+
+1956-72 1973-74
+
+Cheap gas, longer commutes The Arab oil embargo
+
+CHANGE IN MILES
+ORIVEN PER YEAR
++2,270
+
+Americans spent more time in their In 1973, many Arab oil-producing
+cars as highways networks countries declared an oil embargo
+expanded and more workers against the United States because
+commuted from new, far-flung ofits support of Israel in the
+suburbs. The number of commuters Middle East. The supply disruption
+Tose as more women joined the caused oil prices to rise sharply,
+work force. and gas consumption declined.
+Somoee: Eneray Federal Highway, Institution
+
+Gas prices jumped as the Iranian
+revolution and the Iran-Iraq war
+caused a rift in the global oil
+supply. United States energy
+policy turned to conservation, and.
+Congress imposed the first
+fuel-efficiency standards for cars.
+
+METRICS,
+
+Driving Shifts Into Reverse
+
+Felaonhiptetween driving alts ovedaround he county. As gas pies
+oman ces Low pas paces seared in 208, the number os driven
+
+7,000 mi £000 mi 9,000 mi
+
+Enersy crisis The swing backward
+
+The average number of $00
+and quck jump i rice can cause ean al and conned trop ater Ines that Americans
+ces tng in a Dob evenasgasln became cheaper. darwe annuaty begins to =
+‘oulreceny, Americans have riven ey the ery a (al sotme erat appears
+arceach yen hanthe previom one, rapidrsé i asp and they change “ou aroun
+Ata few be exeoptns in thee Sid Kenneth
+age droveabout Sala ansprtation economist athe
+
+‘imme yea on average Fy ears Une alm, vie, “Duty
+inert igre hd cba aon Hed, Siapon Dat temporary. Assam
+
+Test rcesion has caused as unemployment ets ack to
+hgchangc Hihancofirynt ere eve we le
+frorandastampieonsumer spending gain *
+
+ses0
+
+20
+Price of
+2 alon
+
+ot gasoline
+
+Miles driven per capita each year =p 5,000 mi
+
+1986-98 2005-10
+Record low prices The swing backward
+\
+\ CHANGE IN
+| GASPRICES
+\\. crane
+_\\\ SavEN
+(S| 42,087
+ANGE IN
+GAS PRICES |
+-39¢
+Gasoline remained cheap for more ‘The growth in driving faltered as
+than a decade, and the average gas prices started to climb. But
+number of miles Americans drove much of the sharp reduction in
+annually jumped by more than driving was caused by the long
+2,000. Economists observed that recession and its high unemploy-
+consumers became less sensitive ‘ment rate. A small but growing:
+to small gas-price changes as ‘number of thrifty and carbon-
+household incomes rose. conscious commuters switched to
+
+bicycles and public transportation.
+
+
+===== page-013.png =====
+nnn ° r o.! 2,
+Highlight you key findings = : @ 3% o »
+Brandenburg °o ry mph 1,250 ftv
+
+025
+
+feceeye
+
+GHeart Pts s4Steps
+
+(b) Gauges and progress bars withaccom- (c) Miniature charts (#108, #5)
+. . panying numbers (#19, #99, #16).
+Numbers: Single important key facts
+
+Pictograms: illustrate concepts in the data
+
+Gauges and progress bar: any sort of visualization used to represent a range of a value. Some
+gauges come with an indication of ‘critical’ ranges, i.e,. a threshold indicating if values are
+positive/negative.
+
+Miniature Chart: small and concise visualizations without axis descriptions, labels, or tickmarks. The
+
+idea is to give a quick understanding of a trend, rather than allowing the reading of precise values.
+Bach et al.2022 Dashboard Design Patterns,
+
+===== page-014.png =====
+Invite Interactions
+
+Clearly show users how they can explore and interact with the data.
+
+max_pool_1 intermediate conv_2_1
+(30,30, 10) 22,28,10) CC (28, 28, 10)
+
+Kernel 0
+
+Slide kernel over input channel
+to get intermediate result” Bs
+
+Click to learn more I
+
+a
+
+Add up all intermediate
+results and then add bia:
+
+Each input chanel I]
+
+Hover over to see value!|
+
+
+===== page-015.png =====
+Invite Interactions
+
+Visual Cues: Suggest something worth exploring.
+
+17 at 21h 17 at 22h 17 at 23h 18 at 00h 18 at Olh
+
+17 at 20h
+
+===== page-016.png =====
+For my job...
+
+Invite Interactions ica eel
+
+| have the ability to work remotely
+
+Personalized Experience or Interactive quiz to engage users | solve problems daily
+
+I can choose to sit or stand
+
+| need a bachelor's degree
+
+You
+Attendants
+
+‘ f Packers
+Couriers Mail Clerks EMTs
+
+CEOs
+
+Editors ( ~ A i i
+
+HA Maranon i pticians «Barber Furniture Finishe!
+meen F lerks Mining Engineers i Este Lae cll
+
+
+===== page-017.png =====
+Invite Interactions
+
+Personalized Experience or Interactive quiz to engage users
+The Pudding
+
+You're in a rush and you need to grab a bottle of wine for
+a special occasion. You've got $40 and no preference for
+
+red or white, but you like wines with animal labels. =| | |e je en re B | | a | a E
+Which wine are you buying?
+
+a
+
+a
+y
+= PARDAS
+
+
+===== page-018.png =====
+Layout
+
+===== page-019.png =====
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+Good Design Is As Easy
+as 1-2-3
+
+1. Learn the principles.
+They’re simpler than you might think.
+2. Recognize when you’re not using them.
+Put it into words -- name the problem.
+3. Apply the principles.
+You’ll be amazed.
+
+Good design
+
+is as easy as...
+
+] Learn the principles.
+They're simpler than you might think.
+
+Recognize when you're not using them.
+2, Put it into words —name the problem.
+
+3 Apply the principles.
+You'll be amazed.
+
+
+===== page-020.png =====
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+The four basic principles
+
+The following is a brief overview of the basic principles of design that appear
+in every well-designed piece of work. Although I discuss each one of these
+principles separately, keep in mind they are really interconnected. Rarely will
+you apply only one principle.
+
+Contrast
+
+—_
+
+‘The idea behind contrast is to avoid elements on the page that { ae N
+
+are merely similar. If the elements (type, color, size, line thick- DESIGNER'S
+ness, shape, space, etc.) are not the same, then make them
+
+very different. Contrast is often the most important visual
+
+attraction on a page—it's what makes a reader look at the page >) ES | Gq N
+in the first place.
+
+Repetition
+
+Repeat visual elements of the design throughout the piece.
+
+You can repeat colors, shapes, textures, spatial relationships,
+‘ P fe}
+
+line thicknesses, fonts, sizes, graphic concepts, etc. This SECQND EDITION
+
+develops the organization and strengthens the unity. Design and Typographic Principles
+
+for the Visual Novice
+Alignment
+
+Nothing should be placed on the page arbitrarily. Every
+element should have some visual connection with another
+element on the page. This creates a clean, sophisticated,
+fresh look.
+
+Proximity RepiN WILLIAMS
+
+Items relating to each other should be grouped close together.
+When several items are in close proximity to each other, they
+become one visual unit rather than several separate units.
+This helps organize information, reduces clutter, and gives the
+reader a clear structure.
+
+Doek
+
+
+===== page-021.png =====
+Proximity
+
+$0280 87
+
+Loddon LUs
+
+All About Us: Our Mission Our History Our Philosophy Current Topics:
+[All About Suspenders Pencils ToGo What Is Irony? Contact Us
+
+Do you find yourself longing for the good old days of yore—
+before technology made us all move and speak and think in,
+double-time? Days that moved at a slower pace, allowing each
+of us to more fully experience our lives . . . when we had to
+earn the chance to sit back and read by the golden glow of
+‘candlelight or lantern . .. when a neighbor's house was a walk
+away—but we knew our neighbors and looked out for each
+other? If so, you may be one of us. Read on...
+
+‘Thank God men cannot as yet fy and lay waste the sky as well as the
+arth! —HENRY DAVID THOREAU
+
+The information on this page is muddled. Look at the site links just under the
+title. Are they all equal in meaning? They appear to be—but they're not.
+
+Qiectletis PRUs
+
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+free Coffee!
+
+, "€¢ Donutgy
+7
+rs Garage Sa le!
+. a Toys
+tort intage Clothing — La,
+patna Gen 7 Bing Cay,
+Good-As-New
+Dentistry T:
+asthe entistry Tools nal
+equip, lon
+1942 pment
+Motorola Radio Large Bird
+proceeds Hane 527 Happening Read
+vor Ne
+Wag Nie FE gd muck mort! Saturday 923
+
+AIL About Us Doyou find yourself longing for the good old
+‘Our Mission days of yore—before technology made us all
+‘Our History
+
+‘move and speak and think in double-time? Days
+
+Our PRiIOPRY that moved at a slower pace, allowing each of us
+Current Topics to more fully experience Our lives ... when we
+A ‘nad to earn the chance to sit back and read by the
+Peocils ToGo. golden glow of candlelight or lantern ... when a
+What Is Irony? neighbor's house was a walk away—but we knew
+Contact Us our neighbors and looked out for each other?
+
+If s0, you may be one of us. Read on...
+
+‘Thank God men cannot ay iy
+dana lay wate tbe ky wei asthe ear
+
+—_—_ ke ee ae
+| moved all the site links into one column to show their relationships
+
+to one another (and moved the nerd-man to the other side).
+
+1 set the quotation further away from the main body copy since it’s
+
+not directly related.
+
+1 also used the principle of alignment (discussed in Chapter 3): | used
+
+flush-left alignment and made sure each element lined up with some-
+
+thing else.
+
+& Garage Sale!
+
+S Saturday 9-3 527 Happening Road
+
+Good-As-New
+
+25-Ib. bags of Large Bird and
+Dentistry Tools
+
+bird feed Large Bird Cage
+
+Victorian 1950s Beauty Salon 1942 Motorola Radio
+Fainting Couch Equipment —still works
+
+Vintage Clothing Toys
+
+< and much more!
+
+Free Coffee and Donuts!
+
+Proceeds go to the Mary Sidney Edveation Fund
+
+
+===== page-022.png =====
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+Alignment
+
+A center alignment is the most common alignment beginners use- it is safe, it feels
+comfortable.
+But a strong right or left alignment with good proximity will surprise you.
+
+Mom & Pop
+4 Corer Grocery Store
+
+: Mom & Pop
+
+: Comer Grocery Store
+
+Mom & Pop
+Corner Grocery Store
+
++ 5 Jam Street  Springyille «Illinois » 00123
+
+5 Jam Street « Springville, Illinois 00123
+
+This isn’t bad, but the centered layout A flush-left alignment makes the page
+is a little dull, and the border closes a little more sophisticated. Limiting the
+the space, making it feel confined. dotted line to the left side opens the Be brave! Be bold!
+
+page and emphasizes the alignment.
+
+===== page-023.png =====
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+Repetition
+
+The repetition design principle refers to the use of similar (or identical)
+elements throughout a design.
+
+(——
+LOREM
+on IPSUM
+. : DOLOR REM
+panrsazene peter a= DOLOR
+
+LOREM a =
+
+IPSUM aS
+DOLOR e
+
+LOREM IPSUM
+
+DOLOR LOREM
+
+IPSUM
+DOLOR
+
+o Write 8 Covel tee there
+
+
+===== page-024.png =====
+. The repetition design principle refers to the use of similar (or
+Repetition identical) elements throughout a design.
+
+Similar layout |
+Similar color encoding Ui Messteteecets a ne Tat
+
+Similar ways to contract and highlight text —
+Similar interactions q ° r eee
+
+Recursion
+2 :
+
+Reality check
+
+
+===== page-025.png =====
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+Contrast
+
+the intentional use of visually different elements within a design to create emphasis, capture
+attention, and highlight important information by placing opposing elements next to each other,
+
+Grant J. Egley
+Rt. Box 157
+Greenville, MS. 7501
+(888) 585.1212
+
+OBJECTIVE:
+“Tofind a position as a high schoo! math teacher and fotball coach inthe North Mississippi area.
+
+WORK EXPERIENCE:
+
+‘August 1999-present Math teacher and football coach at St Joseph High School, Greenville,
+“Mississippi. Shared the joy of mathematics with high school students, attempted to teach private-
+school boys how to play football, went to mass on Fridays, and learned to speak with an rsh
+
+May 2001-present Assistant manager for The Beer Barn, Greenville, Misisipp. Tossed
+alcoholic beverages into vehicles whizzing through the drive-through, chased down shoplitrs at
+90 mph, and had quiet, intellectual conversations with friends while waiting for customers
+
+Jan, 1997- May 1999 Math teacher and football coach at Leland High School, Leland,
+Mississippi. Taught Algebra Ito freshmen, coached the offensive line forthe Leland Cubs
+octal team, hung out in the halls, titled key rings full of keys, and drove an old red school
+‘bus on muddy Delta back roads with a busload of screaming ball players
+
+‘Summers 1997-2000 Manager of swimming poo! for City of Leland Recreation Department,
+Leland, Mississippi. Served as swimming poo! manager. Got one heck of tan, saved swooning
+Females from conniving poo! sharks, looked good, & splashed bullies.
+
+EDUCATION:
+1995 Mississippi Delta Junioe College
+1997 Mississippi State University - BS in Math & Science
+
+PROFESSIONAL AFFILIATION:
+
+Grand National Canoe Club, Executive Secretar, 2000-2002
+
+‘We Bad Weightliters of America, Member, 1993-present
+
+National Organization of Brothers of Laura Egle, President, 1964-present
+
+HOBBIES:
+Waterskiing, tp dance, stret racing, entering trivia contests
+
+References available on request,
+
+Grant J. Egley
+
+Rosse 4 Box 157
+Greenvile, MS. #7801,
+
+(888) 555-1212
+Objective
+“To ind a portion asa high school math teacher and football couch in the
+Nowth Mississippi area.
+Work:
+
+‘August 1999prsent Math teacher and football coach aS. Josep High School, Greenville
+Mississippi, Shared the oy of mathematics with high school students, atempted 10
+teach pv ate-school bays how 1 play football, went fo mass on Friday, and learned
+to speak with an Ish accent.
+
+May 2001-present _Astetant manager {or The Heer Barn, Grenville, Mss. Tossed alcoholic
+Ieverages into vehicles whizing through the drive-through, chased down shpliers|
+1 90 wi, and had qui, inlet converations with fiends while waiting for
+
+Jan 17-May 1999 Math teacher and football coach a land High School Leland, Mississippi.
+Tag Algebra | to freshmen, coached the offensive ln forthe Leland Cubs fotall
+team, hangout inthe balls, wired key rings full of keys, and drove an od red schoo!
+us on muy Deka back rads witha basload of screaming bl players.
+
+Summer 1997-2000 Manager ofthe municipal srimming poo! or the Cit of Leland Recreation
+Deparment, land, Misisspy, Got tn saved swooning females ro conniving
+pool sharks, looked good, and splashed bullies.
+
+1997 1S in Math & Science, Missisippl State University
+1995 Mississippi Deka Junior Collese
+Affiliation
+
+‘Grand National Canoe Club, Executive Secretary, 2000-2002
+‘We Bad Weghtiters of America, Member, 1993-present
+[National Organization of Brothers of Laura Epley, Presiden, 1964—present
+
+‘Waterski. ap dancing, see racing. entering wiv contest
+
+Retorences cla om request
+
+
+===== page-026.png =====
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+Contrast
+
+the intentional use of visually different elements within a design to create emphasis, capture
+attention, and highlight important information by placing opposing elements next to each other,
+
+Recursion
+82
+6 99
+105 40 NY SF
+Sa be ater ee eee | od ost De tae a RS
+ld, —~ tlio.
+i} | | i amon L | | 1
+
+camtDasteaetettitee ob oe i oi Pond a-sta Stadio LAL shady ult
+
+===== page-027.png =====
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+Contrast
+
+the intentional use of visually different elements within a design to create emphasis, capture
+attention, and highlight important information by placing opposing elements next to each other,
+
+Not at all. In fact, it’s increasingly more popular! The love song didn’t die; it evolved. People are
+loving, losing, and connecting in more ways than ever before. We argue that modern pop is just as
+love-struck as ever, just maybe in ways that Boomer Bob doesn’t recognize.
+
+
+===== page-028.png =====
+Williams, Robin. The non-designer’s design book: Design and typographic principles for the visual novice. Pearson Education, 2015.
+
+Contrast
+
+the intentional use of visually different elements within a design to create emphasis, capture
+attention, and highlight important information by placing opposing elements next to each other,
+
+
+===== page-029.png =====
+Exercise
+
+SNOOP DOG PRESENTS: ae A y
+
+7,
+
+YOUR LUNGS
+
+ve. 4
+~ IN CASE YOUR f
+is ania ag
+MIGHT NOT KNOW ABOUT
+—& THE TOBACCO INDUSTRY,
+Co). nnes, AND THE
+
+hp
+
+Credit to my colleague Prof. Dan Keefe
+
+===== page-030.png =====
+How to make Video
+
+===== page-031.png =====
+Evaluation:
+Is my visualization “Good’?
+
+===== page-032.png =====
+Types of evaluation
+
+Quantitative Data Qualitative Data
+
+* money verbal and written feedback
+
+« time $ * narrative story
+
+* speed - first-hand (direct experience)
+
+movement - second-hand (telling someone else)
+height - third-hand (outside story-teller)
+length « visual images, drawings, or models
+
+area * experiential sensations
+
+volume —> ¢ descriptions of
+
+weight - colors - feelings
+
+temperature - textures - intuition eee i)
+humidity ~ smells - sensations
+
+pressure tastes - choices
+
+sound level ~ appearance _ values
+
+categories A A \ - beauty - beliefs
+
+(age, gender, occupation)
+
+positioning f
+
+status
+
+Quantitative
+
+Clarity of the
+visualization: average
+rating 4.37
+
+Qualitative
+
+“| got confused when the
+story jumped from
+personal data to national
+trends.”
+
+===== page-033.png =====
+Quantitative vs. Qualitative
+
+e Apost-survey asking users to rate how easy it was to titati
+understand the story on a 5-point Likert scale. Quantitative
+
+e Interviewing participants to understand which parts of the Qualitative
+visualization were confusing.
+
+e Tracking how long users spend on each scene of the data story. Quantitative
+
+e Asking participants to freely narrate what they understood after Qualitative
+viewing the visualization.
+
+e Counting how many users correctly answered comprehension Quantitative
+questions after reading the visualization.
+
+===== page-034.png =====
+Types of Evaluation
+
+Empirical Evaluation vs. Analytical Evaluation
+
+Empirical Evaluation (With Actual Users)
+
+Involves real users interacting with the visualization
+
+Collects user-centered feedback on comprehension, usability, and experience
+Methods include user studies, interviews, think-alouds, surveys, and A/B tests
+Captures qualitative (opinions, emotions) and/or quantitative (task time, accuracy) data
+Helps reveal unexpected issues and insights about user behavior
+
+Analytical Evaluation (Without Actual Users)
+
+Conducted without involving users
+
+Relies on design heuristics and or automated tools
+
+Methods include heuristic evaluation, theoretical analysis, and accessibility checks
+Fast, low-cost
+
+Cannot fully assess user experience or story comprehension
+
+===== page-035.png =====
+Empirical Evaluation vs. Analytical Evaluation
+
+Participants are asked to recall the key message of Empirical
+a data story after viewing it.
+
+Check the visualization against known design
+principles like color contrast, alignment, and
+readability.
+
+Analytical
+
+An automated tool to check for colorblind
+accessibility and screen-reader compatibility. Analytical
+
+===== page-036.png =====
+Common Methods for Visualization Evaluations
+
+Think-aloud protocol — Users narrate their thoughts while interacting
+User surveys — Collect ratings or open-ended feedback
+
+A/B testing — Compare two design versions for effectiveness
+
+Task performance — Measure time, accuracy, or completion rates
+Interviews & focus groups — Gather in-depth user insights
+
+Heuristic evaluation — Experts check against design principles
+Design checklists — Verify layout, color use, accessibility, etc.
+Interaction logging — Analyze user behavior from usage data
+Automated tools — Check color contrast, readability, etc.
+

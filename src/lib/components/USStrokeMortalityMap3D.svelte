@@ -12,6 +12,10 @@
   export let height: number = 600;
   export let initialYear: number = 2019;
   export let showYearSlider: boolean = true;
+  export let storyMode: boolean = false;
+  export let storyProgress: number = 0;
+
+  $: storyProgress;
 
   const S2C: Record<string, string> = {
     Alabama: "AL",
@@ -77,6 +81,7 @@
   let camera: THREE.PerspectiveCamera;
   let renderer: THREE.WebGLRenderer;
   let controls: OrbitControls;
+  let resizeObserver: ResizeObserver | null = null;
   let raycaster: THREE.Raycaster;
   const pointer = new THREE.Vector2();
   let frameId = 0;
@@ -171,6 +176,10 @@
       animate();
 
       window.addEventListener("resize", onResize);
+      resizeObserver = new ResizeObserver(() => {
+        onResize();
+      });
+      resizeObserver.observe(containerEl);
       onResize();
     } catch (e) {
       console.error(e);
@@ -183,6 +192,8 @@
     unsubYear();
     unsubState();
     window.removeEventListener("resize", onResize);
+    resizeObserver?.disconnect();
+    resizeObserver = null;
 
     if (renderer?.domElement) {
       renderer.domElement.removeEventListener("pointermove", onPointerMove);
@@ -233,6 +244,9 @@
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
+    controls.enableZoom = !storyMode;
+    controls.enablePan = !storyMode;
+    controls.enableRotate = true;
     controls.minDistance = 360;
     controls.maxDistance = 1600;
     controls.minPolarAngle = Math.PI * 0.18;
@@ -616,10 +630,13 @@
     if (!containerEl || !renderer || !camera) return;
 
     const rect = containerEl.getBoundingClientRect();
-    const w = Math.min(width, rect.width);
-    const h = (w / width) * height;
+    const availableWidth = Math.floor(rect.width);
+    if (availableWidth <= 0) return;
 
-    renderer.setSize(w, h);
+    const w = Math.min(width, availableWidth);
+    const h = Math.max(320, Math.round((w / width) * height));
+
+    renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
@@ -639,6 +656,12 @@
     selectedState.set(null);
     refreshStates();
   }
+
+  $: if (controls) {
+    controls.enableZoom = !storyMode;
+    controls.enablePan = !storyMode;
+    controls.enableRotate = true;
+  }
 </script>
 
 <div class="map3d-shell" bind:this={containerEl}>
@@ -648,7 +671,11 @@
       <p class="caption">
         Each state is rendered as a smooth 3D relief block. Higher states indicate
         higher stroke mortality, while the color tint provides a second cue.
-        Click a state to select it. Drag to rotate · scroll to zoom.
+        {#if storyMode}
+          Click a state to highlight it. Drag to rotate. Scroll continues the story.
+        {:else}
+          Click a state to select it. Drag to rotate · scroll to zoom.
+        {/if}
       </p>
     </div>
 

@@ -12,6 +12,9 @@
     } from "$lib/stores";
     export let storyStep: number | null = null;
     export let storyMode: boolean = false;
+    export let storyProgress: number = 0;
+
+    $: storyProgress;
 
     let showInstructions = false;
     
@@ -279,23 +282,23 @@
         });
       }
 
-      if (storyStep === 7) {
+      if (storyStep === 8) {
         selectedVis3Mode.set("overall");
         selectedAgeGroup.set("35+");
         activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
         newlyAddedIds = new Set(activeSeriesIds);
-      } else if (storyStep === 8) {
+      } else if (storyStep === 9) {
         selectedVis3Mode.set("sex");
         selectedAgeGroup.set("35-64");
         animateIn(
           buildRevealSequence(["sex_overall"], ["sex_men", "sex_women"])
         );
-      } else if (storyStep === 9) {
+      } else if (storyStep === 10) {
         selectedVis3Mode.set("race");
         selectedAgeGroup.set("35-64");
         activeSeriesIds = ["race_overall"];
         newlyAddedIds = new Set(["race_overall"]);
-      } else if (storyStep === 10) {
+      } else if (storyStep === 11) {
         selectedVis3Mode.set("race");
         selectedAgeGroup.set("35-64");
         animateIn(
@@ -310,13 +313,13 @@
             ]
           )
         );
-      } else if (storyStep === 11) {
+      } else if (storyStep === 12) {
         selectedVis3Mode.set("county");
         selectedAgeGroup.set("35-64");
         activeSeriesIds = referenceSeriesId ? [referenceSeriesId] : [];
         countyColorAssignments = {};
         newlyAddedIds = new Set(activeSeriesIds);
-      } else if (storyStep === 12) {
+      } else if (storyStep === 13) {
         selectedVis3Mode.set("county");
         selectedAgeGroup.set("35-64");
 
