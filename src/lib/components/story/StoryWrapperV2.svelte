@@ -34,28 +34,29 @@
       step: 1,
       section: "vis1",
       title: "2019 Rank Overview",
-      text: `Stroke is one of the leading causes of death around the world and in the United States. 
+      text: `<span class="hl">Stroke</span> is one of the leading causes of death around the world and in the United States. 
       According to the <a href="http://who.int/news-room/fact-sheets/detail/stroke" target="_blank" class="who-link">WHO</a>'s definition, a stroke is a medical emergency that occurs when blood flow to the brain is interrupted, either due to a blockage or bleeding.
       This lack of blood flow can lead to brain cell death and serious complications. Strokes can be fatal and need immediate treatment. 
       <br><br>Narrow down to U.S., let's explore the <a href="https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021" target="_blank" class="dataset-link">Stroke Mortality Data Among US Adults (35+) by State/Territory and County</a> dataset. 
-      <br><br>Mortality refers to the frequency of death within a certain population. Mortality rate is the number of deaths per 100,000(this number could vary).In this project, the stroke mortality explicitly refers to the how many people died of stroke per 100,000 in a given year. `,
+      <br><br><span class="hl">Mortality</span> refers to the frequency of death within a certain population. Mortality rate is the number of deaths per 100,000(this number could vary).In this project, the stroke mortality explicitly refers to the how many people died of stroke per 100,000 in a given year. `,
       prompt: "Key question: Which states has the highest stroke mortality in 2019?",
     },
     {
       step: 2,
       section: "vis1",
       title: "From Snapshot to Trend",
-      text: `One scroll later, that static ranking expands into a bump chart for 1999-2019.The chart now tells a story of changing positions rather than a single-year order.
-      <br><br>As we can see on the bump chart, there is a clear reginal and geographic pattern in stroke mortality. The highest rates are concentrated in the Southeast, while the lowest rates are in the Northeast. This pattern is stable over time, with most states maintaining their relative positions. Some states do show movement, such as North Carolina and Iowa, which have consistently high rates but show some fluctuation in their rankings. However, certain state like Mississippi has a growing trend within recent years, and stay the first for many years.`,
+      text: `With one scroll from <span class="hl">Step 1</span>, that static ranking expands into a <span class="hl">bump chart</span> from 1999-2019. The chart now tells a story of changing ranks of state mortality over time.
+      <br><br>As we can see in the chart, there is a clear reginal and geographic pattern in stroke mortality. The highest rates are concentrated in the <span class="hl">Southeast</span>, while the lowest rates are in the <span class="hl">Northeast</span>. 
+      This pattern is stable over time, with most states maintaining their relative positions. Some states do show movement, such as <span class="hl">North Carolina</span> and <span class="hl">Iowa</span>. However, certain state like <span class="hl">Mississippi</span> has a growing trend within recent years, and stay the first for many years.`,
       prompt: "Watch for: states that move, and states that stay near the top.",
     },
     {
       step: 3,
       section: "vis1",
-      title: "Prepare a State Focus",
-      text: `The national level bump chart shows us the national geographic pattern. Aside from the fact that Southeast states have higher mortality, another fact is that this overall bump chart is overwhelming.
-      <br><br> This is the time to introduce the select options above the chart, which allow the viewer to focus on a specific region and look at the trend or rank in this region.
-      <br><br>A pop-up pauses the viewer and signals that the next move is a state selection. This makes the transition from national comparison to case study feel deliberate.`,
+      title: "Prepare a State to Focus",
+      text: `The national level <span class="hl">bump chart</span> shows us the national geographic pattern. Aside from the fact that <span class="hl">Southeast</span> states have higher mortality, another fact is that this overall bump chart is overwhelming.
+      <br><br> This is the time to introduce the <span class="hl">select buttons</span> which allow the viewer to focus on a specific region and look at the trend or rank in this region.
+      <br><br>Scrolling down and the next movement is a state selection. This makes the transition from national comparison to a state-level view.`,
       prompt: "Next: we move from overview to one state-level anchor.",
     },
     {
@@ -64,7 +65,7 @@
       title: "Mississippi Becomes the Guide",
       text: `Regional level visualization shows a more clear picture of the trend and rank than the national level. However, it is still somehow too broad fo details. Could we be more specific to a state and get much more detailed information?
       <br><br> Luckily, Yes! We can choose a state by clicking on the line and it will be highlighted in the chart.
-      <br><br>Remember we mentione Mississippi in the previous step? Let's explore this one. The chosen state anchors the rest of the author-driven story.`,
+      <br><br> Remember we mentione <span class="hl">Mississippi</span> in the previous <span class="hl">Step 3</span>? Let's explore this one. The chosen state anchors the rest of the <span class="hl">author-driven story</span>.`,
       prompt: "Story anchor: Mississippi remains highlighted in the next views.",
       highlight: {
         label: "Selected state",
@@ -76,16 +77,16 @@
       step: 5,
       section: "vis2",
       title: "Map the 2019 Landscape",
-      text: `Both the bar chart and bump chart are too abstract to show geographic patterns clearly. The story now zooms into a map view that spatializes the 2019 mortality rates with a choropleth.
-      <br><br>The map on the right is now in the default setting, which shows all the states in the U.S. and their stroke mortality rates in 2019. The year could be adjusted by the user later in the user-driven mode.
-      <br><br>The select box on the map allows the user to drag and select a random area. The mortaliy of the states in this area will be presented as glyphs on the side.`,
+      text: `Both the <span class="hl">bar chart</span> and <span class="hl">bump chart</span> show the abstract trends or ranks. In this <span class="hl">Step 5</span>, we zoom into a <span class="hl">map</span> that spatializes the <span class="hl">2019 mortality rates with a choropleth</span>.
+      <br><br>The <span class="hl">map</span> on the right is now in the default setting, which shows all the states in the U.S. and their stroke mortality rates in 2019. All the settings could be adjusted by the user later in the <span class="hl">User-driven mode</span>.
+      <br><br>The <span class="hl">select box</span> on the <span class="hl">map</span> allows the user to drag and select a random area. The mortaliy of the states in this area will be presented as glyphs on the side.`,
       prompt: "Look for: whether Mississippi is isolated or part of a broader regional pattern.",
     },
     {
       step: 6,
       section: "vis2",
       title: "Animate National Change",
-      text: `Now, let's go back to our story. We have already decided to focus on the Mississippi state and selected the correpsonding line in the bump chart. 
+      text: `Now, let's go back to our story and focus on the <span class="hl">Mississippi</span> state. We have already decided to focus on this state and selected the correpsonding line in the <span class="hl">bump chart</span>. 
       <br><br>Now the map opens on the 2019 national distribution with Mississippi still highlighted, preserving continuity while shifting from rank to geography. 
       <br><br>The scroll will animates the choropleth from 1999 to 2019 to enable the audience sees spatial change over time.`,
       prompt: "Watch the year label: the map moves from 1999 to 2019.",
@@ -99,16 +100,17 @@
       step: 7,
       section: "vis2",
       title: "See It in 3D",
-      text: `Welcome to the 3D visualization! 
-      <br><br>The 3D relief now replays yearly change from 1999 to 2019.State height and color both encode mortality, while the strip below lets the viewer anchor a start year, drag out a time window, and compare the selected state against the national average.`,
+      text: `Welcome to the <span class="hl">3D visualization</span>! 
+      <br><br> The <span class="hl">3D visualization</span> now replays yearly change from 1999 to 2019. State height and color both encode mortality, while the strip below lets the viewer anchor a start year, drag out a time window, and compare the selected state against the national average.
+      <br><br> From the animation we could clearly see the overall moratlity trend is dropping, but the regional pattern remains the same.`,
       prompt: "Interaction: click any state to highlight it. Drag to rotate. Click or drag on the strip below to define a year window while scroll continues inside it.",
     },
     {
       step: 8,
       section: "vis3",
       title: "Mississippi Baseline",
-      text: `After viewing the national and regional trend and rank, we come to the last chart. This is a detailed line chart showing the mortality of different subgroups within the state. 
-      <br><br>The last chart starts with Mississippi's overall mortality trend as a single line. That clean baseline makes each later comparison easier to read.`,
+      text: `After viewing the national and regional trends and ranks, we come to the last chart and will break down the data. This is a <span class="hl">detailed line chart</span> showing the mortality of different subgroups within the state. 
+      <br><br>This chart starts with <span class="hl">Mississippi's overall mortality trend</span> as a single line. That clean baseline makes each later comparison easier to read.`,
       prompt: "Baseline: this line is the reference for every later comparison.",
       highlight: {
         label: "Reference line",
@@ -121,7 +123,7 @@
       section: "vis3",
       title: "Sex 35-64: Full Comparison",
       text: `People between 35-64 are not the necessary the subgroup with higheset mortality, but with the change of lifestyle, this group is facing higher and higehr risks. Let's take a look!
-      <br><br>The plot the mortality trends for people between 35-64 by sex groups. Lines for overall, men, and women appear one by one to build the gender comparison gradually.`,
+      <br><br>The chart shows the mortality trends for people between 35-64 by sex groups. Lines for overall, men, and women appear one by one to build the gender comparison gradually.`,
       prompt: "Watch for: whether male and female trends separate or converge.",
     },
     {
@@ -129,15 +131,17 @@
       section: "vis3",
       title: "Race 35-64: Overall",
       text: `Aside from the sex group, race group may also have different mortality trends. Let's see how the racial subgroups look like.
-      <br><br>We remove the view of mortality trends for people between 35-64 by sex groups and reset to the baseline for ages 35-64, starting from the overall line.`,
+      <br><br>We remove the view of mortality trends for people between 35-64 by sex groups and reset to the baseline for ages 35-64, starting from the overall line.
+      <br><br>We can see there is a clear gap between the overall line and the line for male and female. <span class="hl">Male tend to have higher mortality than female</span>.`,
       prompt: "Reset: begin with the overall line before adding racial subgroups.",
     },
     {
       step: 11,
       section: "vis3",
       title: "Race 35-64: Full Comparison",
-      text: `Now we can see the racial subgroups. Race subgroup lines appear one by one, and the newest or hovered subgroup stays emphasized so the comparison remains readable as the full set comes in.
-      <br><br> You can hover on any subgroup line to keep it emphasized while the others fade into the background. This interaction allows you to focus on one comparison at a time even when all lines are visible.`,
+      text: `Now we will guide you through seeing the racial subgroups. Racial subgroup lines appear one by one, and the newest or hovered subgroup stays emphasized so the comparison remains readable as the full set comes in.
+      <br><br> You can hover on any subgroup line to keep it emphasized while the others fade into the background. This interaction allows you to focus on one comparison at a time even when all lines are visible.
+       <br><br>From the comparison we can see there is a clear gap between different racial groups. <span class="hl">Black or African American(Non-Hispanic) group tend to have higher mortality than any other group</span>. The other groups, <span class="hl">American Indian or Alaska Native, White, Hispanic and Asian or Pacific Islander</span> have lower mortality than the overall line. However, <span class="hl">the American Indian or Alaska Native group has fluctuating trend.</span>`,
       prompt: "Interaction: hover a subgroup line to keep it emphasized.",
     },
     {
@@ -153,7 +157,7 @@
       section: "vis3",
       title: "County 35-64: Full Comparison",
       text: `There is two issues with the county level visualization. A state will have typically over 30 or 40 counties, it will be a challenge to visualize all of them. Also, it's hard to tell what are the names of the counties in a state you don't familiar with.
-      <br><br>To solve this problem, we will not provide the visualization of all counties by default, but offering some suggested counties that are worth to look at. Here, for the Mississippi state, the five suggested counties are Bolivar, Leflore, Humphreys, Hinds and Sunflower.
+      <br><br>To solve this problem, we will not provide the visualization of all counties by default, but offering some suggested counties that are worth to look at. Here, for the <span class="hl">Mississippi</span> state, the five suggested counties are <span class="hl">Bolivar, Leflore, Humphreys, Hinds and Sunflower</span>.
       <br><br>They each revealed one by one against the state average, completing the guided county comparison.`,
       prompt: "Watch for: which counties sit above or below the state average.",
     },
@@ -819,6 +823,10 @@
   </div>
 
   <div style="height: 200vh; pointer-events: none;" aria-hidden="true"></div>
+
+
+
+  
 </div>
 
 {#if mounted && userMode}
@@ -830,6 +838,37 @@
       <DetailLinePlot storyMode={false} />
     </div>
   </section>
+
+  <!-- Footer only visible in user-driven mode -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-block">
+        <h4>Data Sources</h4>
+        <ul>
+          <li>
+            <a href="https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021" target="_blank">
+              CDC Stroke Mortality Data Among US Adults (35+) by State/Territory and County
+            </a>
+          </li>
+          <li>
+            <a href="https://www.who.int/news-room/fact-sheets/detail/stroke" target="_blank">
+              WHO — Stroke
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="footer-block">
+        <h4>Contributors</h4>
+        <ul>
+          <li>Lechen Shen</li>
+          <li>Songlin Shang</li>
+          <li>Ruixing Lu</li>
+          <li>Jacob Sun</li>
+          <li>Chenzhi Zhao</li>
+        </ul>
+      </div>
+    </div>
+  </footer>
 {/if}
 
 <style>
@@ -972,6 +1011,13 @@
   font-weight: 800;
   text-decoration: none;
   background-color: #dbeafe;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+:global(.hl) {
+  color: #2563eb;
+  font-weight: 800;
+  text-decoration: none;
   padding: 1px 4px;
   border-radius: 3px;
 }
@@ -1462,6 +1508,48 @@
   opacity: 0;
   pointer-events: none;
   z-index: 0;}
+
+  .site-footer {
+  background: #1e293b;
+  color: #cbd5e1;
+  padding: 40px 32px;
+}
+
+.footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 60px;
+  flex-wrap: wrap;
+}
+
+.footer-block h4 {
+  color: #f1f5f9;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0 0 12px 0;
+}
+
+.footer-block ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.footer-block a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+.footer-block a:hover {
+  text-decoration: underline;
+}
   
 
   
