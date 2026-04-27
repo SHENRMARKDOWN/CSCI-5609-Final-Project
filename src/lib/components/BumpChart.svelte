@@ -394,7 +394,7 @@ const xAxisG = svgEl
       .attr("text-anchor", "middle")
       .attr("font-size", "18px")
       .attr("fill", "#333")
-      .text(currentSelectedYear !== null ? "Mortality Rate" : "Year");
+      .text(currentSelectedYear !== null ? "Mortality Rate(per 100,000 persons)" : "Year");
 
       if (currentSelectedYear !== null) {
         svgEl
@@ -516,7 +516,7 @@ const xAxisG = svgEl
   <div class="vis-header">
 
   <div class="header-row">
-  <h2>Stroke mortality bump chart</h2>
+  <h2>Stroke Mortality Rate(per 100,000 persons) Bump Chart</h2>
   <button class="info-btn" on:click={() => showInstructions = !showInstructions}>ℹ</button>
 </div>
 
