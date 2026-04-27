@@ -34,28 +34,37 @@
       step: 1,
       section: "vis1",
       title: "2019 Rank Overview",
-      text: "We begin with a 2019 ranking bar chart so the audience first sees where stroke mortality is highest before any motion is introduced.",
-      prompt: "Key question: Which states start at the top in 2019?",
+      text: `Stroke is one of the leading causes of death around the world and in the United States. 
+      According to the <a href="http://who.int/news-room/fact-sheets/detail/stroke" target="_blank" class="who-link">WHO</a>'s definition, a stroke is a medical emergency that occurs when blood flow to the brain is interrupted, either due to a blockage or bleeding.
+      This lack of blood flow can lead to brain cell death and serious complications. Strokes can be fatal and need immediate treatment. 
+      <br><br>Narrow down to U.S., let's explore the <a href="https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021" target="_blank" class="dataset-link">Stroke Mortality Data Among US Adults (35+) by State/Territory and County</a> dataset. 
+      <br><br>Mortality refers to the frequency of death within a certain population. Mortality rate is the number of deaths per 100,000(this number could vary).In this project, the stroke mortality explicitly refers to the how many people died of stroke per 100,000 in a given year. `,
+      prompt: "Key question: Which states has the highest stroke mortality in 2019?",
     },
     {
       step: 2,
       section: "vis1",
       title: "From Snapshot to Trend",
-      text: "One scroll later, that static ranking expands into a bump chart for 1999-2019. The chart now tells a story of changing positions rather than a single-year order.",
+      text: `One scroll later, that static ranking expands into a bump chart for 1999-2019.The chart now tells a story of changing positions rather than a single-year order.
+      <br><br>As we can see on the bump chart, there is a clear reginal and geographic pattern in stroke mortality. The highest rates are concentrated in the Southeast, while the lowest rates are in the Northeast. This pattern is stable over time, with most states maintaining their relative positions. Some states do show movement, such as North Carolina and Iowa, which have consistently high rates but show some fluctuation in their rankings. However, certain state like Mississippi has a growing trend within recent years, and stay the first for many years.`,
       prompt: "Watch for: states that move, and states that stay near the top.",
     },
     {
       step: 3,
       section: "vis1",
       title: "Prepare a State Focus",
-      text: "A pop-up pauses the viewer and signals that the next move is a state selection. This makes the transition from national comparison to case study feel deliberate.",
+      text: `The national level bump chart shows us the national geographic pattern. Aside from the fact that Southeast states have higher mortality, another fact is that this overall bump chart is overwhelming.
+      <br><br> This is the time to introduce the select options above the chart, which allow the viewer to focus on a specific region and look at the trend or rank in this region.
+      <br><br>A pop-up pauses the viewer and signals that the next move is a state selection. This makes the transition from national comparison to case study feel deliberate.`,
       prompt: "Next: we move from overview to one state-level anchor.",
     },
     {
       step: 4,
       section: "vis1",
       title: "Mississippi Becomes the Guide",
-      text: "Mississippi is automatically selected and highlighted. That chosen state anchors the rest of the author-driven story.",
+      text: `Regional level visualization shows a more clear picture of the trend and rank than the national level. However, it is still somehow too broad fo details. Could we be more specific to a state and get much more detailed information?
+      <br><br> Luckily, Yes! We can choose a state by clicking on the line and it will be highlighted in the chart.
+      <br><br>Remember we mentione Mississippi in the previous step? Let's explore this one. The chosen state anchors the rest of the author-driven story.`,
       prompt: "Story anchor: Mississippi remains highlighted in the next views.",
       highlight: {
         label: "Selected state",
@@ -67,14 +76,18 @@
       step: 5,
       section: "vis2",
       title: "Map the 2019 Landscape",
-      text: "The map opens on the 2019 national distribution with Mississippi still highlighted, preserving continuity while shifting from rank to geography.",
+      text: `Both the bar chart and bump chart are too abstract to show geographic patterns clearly. The story now zooms into a map view that spatializes the 2019 mortality rates with a choropleth.
+      <br><br>The map on the right is now in the default setting, which shows all the states in the U.S. and their stroke mortality rates in 2019. The year could be adjusted by the user later in the user-driven mode.
+      <br><br>The select box on the map allows the user to drag and select a random area. The mortaliy of the states in this area will be presented as glyphs on the side.`,
       prompt: "Look for: whether Mississippi is isolated or part of a broader regional pattern.",
     },
     {
       step: 6,
       section: "vis2",
       title: "Animate National Change",
-      text: "The first map scroll introduces a note and then animates the choropleth from 1999 to 2019 so the audience sees spatial change over time.",
+      text: `Now, let's go back to our story. We have already decided to focus on the Mississippi state and selected the correpsonding line in the bump chart. 
+      <br><br>Now the map opens on the 2019 national distribution with Mississippi still highlighted, preserving continuity while shifting from rank to geography. 
+      <br><br>The scroll will animates the choropleth from 1999 to 2019 to enable the audience sees spatial change over time.`,
       prompt: "Watch the year label: the map moves from 1999 to 2019.",
       highlight: {
         label: "Animated window",
@@ -86,14 +99,16 @@
       step: 7,
       section: "vis2",
       title: "See It in 3D",
-      text: "The 3D relief now replays yearly change from 1999 to 2019. State height and color both encode mortality, while the strip below lets the viewer anchor a start year, drag out a time window, and compare the selected state against the national average.",
+      text: `Welcome to the 3D visualization! 
+      <br><br>The 3D relief now replays yearly change from 1999 to 2019.State height and color both encode mortality, while the strip below lets the viewer anchor a start year, drag out a time window, and compare the selected state against the national average.`,
       prompt: "Interaction: click any state to highlight it. Drag to rotate. Click or drag on the strip below to define a year window while scroll continues inside it.",
     },
     {
       step: 8,
       section: "vis3",
       title: "Mississippi Baseline",
-      text: "The final chart starts with Mississippi's overall mortality trend as a single line. That clean baseline makes each later comparison easier to read.",
+      text: `After viewing the national and regional trend and rank, we come to the last chart. This is a detailed line chart showing the mortality of different subgroups within the state. 
+      <br><br>The last chart starts with Mississippi's overall mortality trend as a single line. That clean baseline makes each later comparison easier to read.`,
       prompt: "Baseline: this line is the reference for every later comparison.",
       highlight: {
         label: "Reference line",
@@ -105,42 +120,48 @@
       step: 9,
       section: "vis3",
       title: "Sex 35-64: Full Comparison",
-      text: "The plot switches to sex for ages 35-64. Lines for overall, men, and women appear one by one to build the gender comparison gradually.",
+      text: `People between 35-64 are not the necessary the subgroup with higheset mortality, but with the change of lifestyle, this group is facing higher and higehr risks. Let's take a look!
+      <br><br>The plot the mortality trends for people between 35-64 by sex groups. Lines for overall, men, and women appear one by one to build the gender comparison gradually.`,
       prompt: "Watch for: whether male and female trends separate or converge.",
     },
     {
       step: 10,
       section: "vis3",
       title: "Race 35-64: Overall",
-      text: "The view resets to race for ages 35-64 and again starts from the overall line.",
+      text: `Aside from the sex group, race group may also have different mortality trends. Let's see how the racial subgroups look like.
+      <br><br>We remove the view of mortality trends for people between 35-64 by sex groups and reset to the baseline for ages 35-64, starting from the overall line.`,
       prompt: "Reset: begin with the overall line before adding racial subgroups.",
     },
     {
       step: 11,
       section: "vis3",
       title: "Race 35-64: Full Comparison",
-      text: "Race subgroup lines appear one by one, and the newest or hovered subgroup stays emphasized so the comparison remains readable as the full set comes in.",
+      text: `Now we can see the racial subgroups. Race subgroup lines appear one by one, and the newest or hovered subgroup stays emphasized so the comparison remains readable as the full set comes in.
+      <br><br> You can hover on any subgroup line to keep it emphasized while the others fade into the background. This interaction allows you to focus on one comparison at a time even when all lines are visible.`,
       prompt: "Interaction: hover a subgroup line to keep it emphasized.",
     },
     {
       step: 12,
       section: "vis3",
       title: "County 35-64: State Average",
-      text: "The chart resets to county mode for ages 35-64 and starts with the state average only.",
+      text: `Aside from the racial group, geographic location may also have different mortality trends. Let's see how the geographic location look like.
+      <br><br>We remove the view of mortality trends for people between 35-64 by geographic location and reset to the baseline for ages 35-64, starting from the overall line.`,
       prompt: "Baseline: the state average becomes the comparison line for counties.",
     },
     {
       step: 13,
       section: "vis3",
       title: "County 35-64: Full Comparison",
-      text: "Five suggested counties are revealed one by one against the state average, completing the guided county comparison.",
+      text: `There is two issues with the county level visualization. A state will have typically over 30 or 40 counties, it will be a challenge to visualize all of them. Also, it's hard to tell what are the names of the counties in a state you don't familiar with.
+      <br><br>To solve this problem, we will not provide the visualization of all counties by default, but offering some suggested counties that are worth to look at. Here, for the Mississippi state, the five suggested counties are Bolivar, Leflore, Humphreys, Hinds and Sunflower.
+      <br><br>They each revealed one by one against the state average, completing the guided county comparison.`,
       prompt: "Watch for: which counties sit above or below the state average.",
     },
     {
       step: 14,
       section: "user",
       title: "Hand Off to User-Driven Mode",
-      text: "The guided sequence ends here. The viewer can now move into the user-driven dashboard for free exploration.",
+      text: `The guided sequence ends here. So far we only showed a small part of this data. Please feel free to explore the user-driven dashboard for more in-depth analysis.`,
       prompt: "Now explore freely: use the controls to change state, year, and subgroup.",
     },
   ];
@@ -243,7 +264,7 @@
     const bridges: Record<number, { text: string; height: number }> = {
       1: {
         height: 35,
-        text: "Keep this ranking in mind: it gives us a starting order, but not a trajectory. The next view asks whether high-ranked states stayed high across time.",
+        text: "We begin with a snapshot on 2019 ranking bar chart so the audience first sees where stroke mortality is highest before any motion is introduced.<br><br>Keep this ranking in mind: it gives us a starting order, but not a trajectory. The next view asks whether high-ranked states stayed high across time.",
       },
       2: {
         height: 55,
@@ -695,7 +716,7 @@
             <div class="step-index">{item.step}</div>
             <p class="section-tag">{item.section.toUpperCase()}</p>
             <h2 class="step-title">{item.title}</h2>
-            <p class="step-copy">{item.text}</p>
+            <p class="step-copy">{@html item.text}</p>
 
             {#if item.highlight}
               <div class="key-highlight">
@@ -717,7 +738,7 @@
             style={`--bridge-height: ${bridge.height}vh;`}
           >
             <p class="bridge-label">Transition</p>
-            <p class="bridge-text">{bridge.text}</p>
+            <p class="bridge-text">{@html bridge.text}</p>
           </div>
         {/if}
       {/each}
@@ -938,6 +959,22 @@
     color: #1d4ed8;
     font-weight: 700;
   }
+  :global(.who-link) {
+  color: #2563eb;
+  font-weight: 800;
+  text-decoration: none;
+  background-color: #dbeafe;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+:global(.dataset-link) {
+  color: #2563eb;
+  font-weight: 800;
+  text-decoration: none;
+  background-color: #dbeafe;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
 
   .story-body {
     position: fixed;
@@ -1424,8 +1461,8 @@
     .story-body.user-mode {
   opacity: 0;
   pointer-events: none;
-  z-index: 0;
-}
+  z-index: 0;}
+  
 
   
 </style>
