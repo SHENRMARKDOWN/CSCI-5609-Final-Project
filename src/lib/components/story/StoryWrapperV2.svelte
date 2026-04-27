@@ -86,8 +86,8 @@
       step: 7,
       section: "vis2",
       title: "See It in 3D",
-      text: "A 3D relief of the same 2019 landscape: each state's height and red tint both encode its mortality, so the Southeast cluster physically rises above the rest. Click any state to highlight it. Drag to rotate. Scroll continues the story.",
-      prompt: "Interaction: click any state to highlight it. Drag to rotate. Scroll continues the story.",
+      text: "The 3D relief now replays yearly change from 1999 to 2019. State height and color both encode mortality, while the strip below lets the viewer anchor a start year, drag out a time window, and compare the selected state against the national average.",
+      prompt: "Interaction: click any state to highlight it. Drag to rotate. Click or drag on the strip below to define a year window while scroll continues inside it.",
     },
     {
       step: 8,
@@ -211,7 +211,7 @@
       return {
         tag: "VIS2",
         title: "U.S. Stroke Mortality Map",
-        subtitle: "Guided 3D relief with click highlight and drag rotation",
+        subtitle: "Guided 3D relief with brush-driven time playback",
       };
     }
 
@@ -265,8 +265,8 @@
         text: "By the end of the animation, the country is lighter than it was in 1999. The important question becomes: even after improvement, which places still stand out?",
       },
       7: {
-        height: 70,
-        text: "The 3D view is a reading aid, not a new statistic: height and color repeat the same mortality signal so regional peaks are easier to notice. Try rotating once, then continue.",
+        height: 78,
+        text: "The 3D view is still the same mortality signal, but now time is explicit: the brush shows the national average against the selected state, and scroll advances the playhead through that range.",
       },
       8: {
         height: 45,
@@ -305,7 +305,7 @@
       4: 95,
       5: 95,
       6: 130,
-      7: 120,
+      7: 150,
       8: 95,
       9: 125,
       10: 95,

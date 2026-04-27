@@ -15,7 +15,24 @@
   export let storyMode: boolean = false;
   export let storyProgress: number = 0;
 
+  $: showYearSlider;
   $: storyProgress;
+
+  type MortalityRow = {
+    state: string;
+    year: number;
+    mortality: number;
+  };
+
+  type SeriesPoint = {
+    year: number;
+    value: number | null;
+  };
+
+  type BrushInteraction = {
+    anchorYear: number;
+    latestYear: number;
+  } | null;
 
   const S2C: Record<string, string> = {
     Alabama: "AL",
@@ -76,6 +93,7 @@
 
   let containerEl: HTMLDivElement;
   let canvasWrapEl: HTMLDivElement;
+  let brushSvgEl: SVGSVGElement | null = null;
 
   let scene: THREE.Scene;
   let camera: THREE.PerspectiveCamera;
@@ -86,12 +104,21 @@
   const pointer = new THREE.Vector2();
   let frameId = 0;
 
-  let mortRows: Array<{ state: string; year: number; mortality: number }> = [];
+  let mortRows: MortalityRow[] = [];
   let geoFeatures: GeoJSON.Feature[] = [];
   let availableYears: number[] = [];
   let activeYear: number = initialYear;
   let dataReady = false;
   let loadError: string | null = null;
+  let yearStateMortality = new Map<number, Map<string, number>>();
+  let yearAverageMortality = new Map<number, number>();
+  let globalMinMortality = 0;
+  let globalMaxMortality = 1;
+  let brushRangeStart = initialYear;
+  let brushRangeEnd = initialYear;
+  let brushInteraction: BrushInteraction = null;
+  let storyPlaybackOffset = 0;
+  let lastAppliedStoryProgress: number | null = null;
 
   type StateRec = {
     code: string;
@@ -120,10 +147,14 @@
 
   const MAP_W = 1100;
   const MAP_H = 600;
+  const BRUSH_W = 1100;
+  const BRUSH_H = 176;
+  const BRUSH_MARGIN = { top: 18, right: 18, bottom: 42, left: 48 };
+  const DEFAULT_FOCUS_STATE = "MS";
 
-  const BASE_DEPTH = 3.2;
-  const MAX_EXTRA_DEPTH = 40;
-  const SELECT_LIFT = 8;
+  const BASE_DEPTH = 4.8;
+  const MAX_EXTRA_DEPTH = 88;
+  const SELECT_LIFT = 12;
 
   const BEVEL_SIZE = 0.18;
   const BEVEL_THICKNESS = 0.14;
@@ -134,6 +165,7 @@
   const FLOOR_BG = 0xf5f6f8;
 
   const formatM = d3.format(".1f");
+  const formatBrushValue = d3.format(".1f");
 
   const unsubYear = selectedYear.subscribe((y) => {
     if (y == null) return;
@@ -144,6 +176,116 @@
   const unsubState = selectedState.subscribe((s) => {
     selectedCode = s ?? null;
   });
+
+  $: focusStateCode = selectedCode ?? DEFAULT_FOCUS_STATE;
+  $: focusStateName = C2S[focusStateCode] ?? focusStateCode;
+  $: brushMinYear = availableYears[0] ?? initialYear;
+  $: brushMaxYear = availableYears[availableYears.length - 1] ?? initialYear;
+  $: if (availableYears.length && brushRangeStart > brushRangeEnd) {
+    brushRangeStart = brushMinYear;
+    brushRangeEnd = brushMaxYear;
+  }
+  $: if (
+    availableYears.length &&
+    (brushRangeStart < brushMinYear ||
+      brushRangeStart > brushMaxYear ||
+      brushRangeEnd < brushMinYear ||
+      brushRangeEnd > brushMaxYear)
+  ) {
+    brushRangeStart = clampYearToExtent(brushRangeStart);
+    brushRangeEnd = clampYearToExtent(brushRangeEnd);
+  }
+  $: nationalAverageSeries = availableYears.map((year) => ({
+    year,
+    value: yearAverageMortality.get(year) ?? null,
+  }));
+  $: focusStateSeries = availableYears.map((year) => ({
+    year,
+    value: yearStateMortality.get(year)?.get(focusStateCode) ?? null,
+  }));
+  $: brushValues = [
+    ...nationalAverageSeries.map((point) => point.value),
+    ...focusStateSeries.map((point) => point.value),
+  ].filter((value) => value != null && Number.isFinite(value)) as number[];
+  $: brushValueMin = d3.min(brushValues) ?? 0;
+  $: brushValueMax = d3.max(brushValues) ?? 1;
+  $: brushValuePad = Math.max(2, (brushValueMax - brushValueMin) * 0.14);
+  $: brushXScale = d3
+    .scaleLinear()
+    .domain([brushMinYear, brushMaxYear])
+    .range([BRUSH_MARGIN.left, BRUSH_W - BRUSH_MARGIN.right]);
+  $: brushYScale = d3
+    .scaleLinear()
+    .domain([brushValueMin - brushValuePad, brushValueMax + brushValuePad])
+    .nice()
+    .range([BRUSH_H - BRUSH_MARGIN.bottom, BRUSH_MARGIN.top]);
+  $: brushLine = d3
+    .line<SeriesPoint>()
+    .defined((point) => point.value != null && Number.isFinite(point.value))
+    .x((point) => brushXScale(point.year))
+    .y((point) => brushYScale(point.value as number));
+  $: nationalAveragePath = nationalAverageSeries.length
+    ? (brushLine(nationalAverageSeries) ?? "")
+    : "";
+  $: focusStatePath = focusStateSeries.length
+    ? (brushLine(focusStateSeries) ?? "")
+    : "";
+  $: yearStepPx =
+    availableYears.length > 1
+      ? brushXScale(availableYears[1]) - brushXScale(availableYears[0])
+      : 24;
+  $: brushSelectionLeft = clampValue(
+    brushXScale(brushRangeStart) - yearStepPx * 0.5,
+    BRUSH_MARGIN.left,
+    BRUSH_W - BRUSH_MARGIN.right
+  );
+  $: brushSelectionRight = clampValue(
+    brushXScale(brushRangeEnd) + yearStepPx * 0.5,
+    BRUSH_MARGIN.left,
+    BRUSH_W - BRUSH_MARGIN.right
+  );
+  $: brushCurrentYearX = brushXScale(activeYear);
+  $: brushCurrentAverage = yearAverageMortality.get(activeYear) ?? null;
+  $: brushCurrentStateValue =
+    yearStateMortality.get(activeYear)?.get(focusStateCode) ?? null;
+  $: brushXTicks = availableYears.filter(
+    (year, index) =>
+      index === 0 || index === availableYears.length - 1 || year % 5 === 0
+  );
+  $: brushYTicks = brushYScale.ticks(4);
+  $: brushRangeLabel =
+    brushRangeStart === brushRangeEnd
+      ? `${brushRangeStart}`
+      : `${brushRangeStart} - ${brushRangeEnd}`;
+  $: brushRangeYears = availableYears.filter(
+    (year) => year >= brushRangeStart && year <= brushRangeEnd
+  );
+  $: activeBrushYears = brushRangeYears.length ? brushRangeYears : availableYears;
+  $: if (!storyMode) {
+    storyPlaybackOffset = 0;
+    lastAppliedStoryProgress = null;
+  }
+  $: if (dataReady && availableYears.length && storyMode) {
+    const clampedProgress = clampValue(storyProgress, 0, 1);
+    if (
+      lastAppliedStoryProgress === null ||
+      Math.abs(clampedProgress - lastAppliedStoryProgress) > 0.0005
+    ) {
+      lastAppliedStoryProgress = clampedProgress;
+      const storyYear = getStoryYearFromProgress(clampedProgress);
+      if (storyYear !== null && storyYear !== activeYear) {
+        selectedYear.set(storyYear);
+      }
+    }
+  }
+  $: if (
+    dataReady &&
+    availableYears.length &&
+    !storyMode &&
+    (activeYear < brushRangeStart || activeYear > brushRangeEnd)
+  ) {
+    setYearFromInteraction(brushRangeEnd);
+  }
 
   onMount(async () => {
     try {
@@ -163,6 +305,24 @@
       );
 
       availableYears = Array.from(new Set(mortRows.map((r) => r.year))).sort();
+      brushRangeStart = availableYears[0] ?? initialYear;
+      brushRangeEnd = availableYears[availableYears.length - 1] ?? initialYear;
+      globalMinMortality = d3.min(mortRows, (row) => row.mortality) ?? 0;
+      globalMaxMortality = d3.max(mortRows, (row) => row.mortality) ?? 1;
+
+      const rowsByYear = d3.group(mortRows, (row) => row.year);
+      yearStateMortality = new Map(
+        Array.from(rowsByYear, ([year, rowsForYear]) => [
+          year,
+          new Map(rowsForYear.map((row) => [row.state, row.mortality])),
+        ])
+      );
+      yearAverageMortality = new Map(
+        Array.from(rowsByYear, ([year, rowsForYear]) => [
+          year,
+          d3.mean(rowsForYear, (row) => row.mortality) ?? 0,
+        ])
+      );
 
       if (!availableYears.includes(activeYear)) {
         activeYear = availableYears[availableYears.length - 1];
@@ -216,6 +376,131 @@
       disposeMat(s.mesh.material);
     });
   });
+
+  function clampValue(value: number, min: number, max: number) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function nearestAvailableYear(target: number) {
+    if (!availableYears.length) return target;
+
+    return availableYears.reduce((closest, year) =>
+      Math.abs(year - target) < Math.abs(closest - target) ? year : closest
+    );
+  }
+
+  function clampYearToExtent(year: number) {
+    if (!availableYears.length) return year;
+    return nearestAvailableYear(clampValue(year, brushMinYear, brushMaxYear));
+  }
+
+  function getStoryYearFromProgress(progress: number) {
+    if (!activeBrushYears.length) return null;
+    const clampedProgress = clampValue(progress + storyPlaybackOffset, 0, 1);
+    const index = Math.round(clampedProgress * (activeBrushYears.length - 1));
+    return activeBrushYears[index] ?? activeBrushYears[activeBrushYears.length - 1];
+  }
+
+  function setYearFromInteraction(year: number) {
+    const nextYear = clampYearToExtent(year);
+    if (nextYear !== activeYear) {
+      selectedYear.set(nextYear);
+    }
+  }
+
+  function setBrushRange(startYear: number, endYear: number) {
+    const safeStart = clampYearToExtent(startYear);
+    const safeEnd = clampYearToExtent(endYear);
+
+    brushRangeStart = Math.min(safeStart, safeEnd);
+    brushRangeEnd = Math.max(safeStart, safeEnd);
+  }
+
+  function getYearsInRange(startYear: number, endYear: number) {
+    const rangeStart = Math.min(startYear, endYear);
+    const rangeEnd = Math.max(startYear, endYear);
+    return availableYears.filter((year) => year >= rangeStart && year <= rangeEnd);
+  }
+
+  function syncStoryPlaybackOffsetToYear(
+    targetYear: number,
+    startYear: number = brushRangeStart,
+    endYear: number = brushRangeEnd
+  ) {
+    if (!storyMode) return;
+
+    const yearsInRange = getYearsInRange(startYear, endYear);
+    if (!yearsInRange.length) return;
+
+    const clampedTargetYear = clampYearToExtent(targetYear);
+    const targetIndex = yearsInRange.indexOf(clampedTargetYear);
+    if (targetIndex < 0) return;
+
+    const targetProgress =
+      yearsInRange.length > 1 ? targetIndex / (yearsInRange.length - 1) : 0;
+    storyPlaybackOffset = clampValue(
+      targetProgress - clampValue(storyProgress, 0, 1),
+      -1,
+      1
+    );
+  }
+
+  function getBrushYearFromClientX(clientX: number) {
+    if (!brushSvgEl) return activeYear;
+
+    const rect = brushSvgEl.getBoundingClientRect();
+    const normalizedX = ((clientX - rect.left) / rect.width) * BRUSH_W;
+    const boundedX = clampValue(
+      normalizedX,
+      BRUSH_MARGIN.left,
+      BRUSH_W - BRUSH_MARGIN.right
+    );
+
+    return clampYearToExtent(Math.round(brushXScale.invert(boundedX)));
+  }
+
+  function beginBrushInteraction(event: PointerEvent) {
+    if (!availableYears.length) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const anchorYear = getBrushYearFromClientX(event.clientX);
+    brushInteraction = {
+      anchorYear,
+      latestYear: anchorYear,
+    };
+    setBrushRange(anchorYear, anchorYear);
+    setYearFromInteraction(anchorYear);
+    syncStoryPlaybackOffsetToYear(anchorYear, anchorYear, anchorYear);
+
+    window.addEventListener("pointermove", handleBrushPointerMove);
+    window.addEventListener("pointerup", endBrushInteraction);
+  }
+
+  function handleBrushPointerMove(event: PointerEvent) {
+    if (!brushInteraction) return;
+
+    const currentYear = getBrushYearFromClientX(event.clientX);
+    brushInteraction.latestYear = currentYear;
+    const nextStart = Math.min(brushInteraction.anchorYear, currentYear);
+    const nextEnd = Math.max(brushInteraction.anchorYear, currentYear);
+
+    setBrushRange(nextStart, nextEnd);
+    setYearFromInteraction(currentYear);
+    syncStoryPlaybackOffsetToYear(currentYear, nextStart, nextEnd);
+  }
+
+  function endBrushInteraction() {
+    if (!brushInteraction) return;
+
+    setYearFromInteraction(brushInteraction.latestYear);
+    syncStoryPlaybackOffsetToYear(brushInteraction.latestYear);
+
+    brushInteraction = null;
+    window.removeEventListener("pointermove", handleBrushPointerMove);
+    window.removeEventListener("pointerup", endBrushInteraction);
+  }
 
   function buildScene() {
     scene = new THREE.Scene();
@@ -518,17 +803,26 @@
   function refreshStates() {
     if (!states3D.length) return;
 
-    const rowsForYear = mortRows.filter((r) => r.year === activeYear);
-    const mortMap = new Map(rowsForYear.map((r) => [r.state, r.mortality]));
-
-    const allVals = mortRows.map((r) => r.mortality);
-    const gMin = d3.min(allVals) ?? 0;
-    const gMax = d3.max(allVals) ?? 1;
-    const denom = Math.max(1e-6, gMax - gMin);
+    const mortMap = yearStateMortality.get(activeYear) ?? new Map<string, number>();
+    const denom = Math.max(1e-6, globalMaxMortality - globalMinMortality);
+    const topColorScale = d3.interpolateRgbBasis([
+      "#fbf3ed",
+      "#f4c3a7",
+      "#ea8b57",
+      "#cf5530",
+      "#7f1d1d",
+    ]);
+    const sideColorScale = d3.interpolateRgbBasis([
+      "#ead8cd",
+      "#d79a77",
+      "#a95d40",
+      "#65201a",
+    ]);
 
     const heightScale = d3
-      .scaleLinear()
-      .domain([gMin, gMax])
+      .scalePow()
+      .exponent(1.12)
+      .domain([globalMinMortality, globalMaxMortality])
       .range([BASE_DEPTH, BASE_DEPTH + MAX_EXTRA_DEPTH]);
 
     for (const s of states3D) {
@@ -544,17 +838,13 @@
         continue;
       }
 
-      const t = (m - gMin) / denom;
+      const t = (m - globalMinMortality) / denom;
+      const contrastT = Math.pow(t, 0.85);
 
       s.targetDepth = heightScale(m);
 
-      topMat.color.set(
-        d3.color(d3.interpolateReds(0.08 + 0.48 * t))!.formatHex()
-      );
-
-      sideMat.color.set(
-        d3.color(d3.interpolateReds(0.04 + 0.24 * t))!.formatHex()
-      );
+      topMat.color.set(d3.color(topColorScale(contrastT))!.formatHex());
+      sideMat.color.set(d3.color(sideColorScale(contrastT))!.formatHex());
     }
   }
 
@@ -641,17 +931,22 @@
     camera.updateProjectionMatrix();
   }
 
-  function onYearInput(e: Event) {
-    const v = +(e.target as HTMLInputElement).value;
-    selectedYear.set(v);
-  }
-
   function resetView() {
     if (!camera || !controls) return;
 
     camera.position.set(0, 870, 720);
     controls.target.set(0, 0, 0);
     controls.update();
+
+    if (availableYears.length) {
+      brushRangeStart = availableYears[0];
+      brushRangeEnd = availableYears[availableYears.length - 1];
+      storyPlaybackOffset = 0;
+      lastAppliedStoryProgress = null;
+      if (!storyMode) {
+        setYearFromInteraction(brushRangeEnd);
+      }
+    }
 
     selectedState.set(null);
     refreshStates();
@@ -672,14 +967,14 @@
         Each state is rendered as a smooth 3D relief block. Higher states indicate
         higher stroke mortality, while the color tint provides a second cue.
         {#if storyMode}
-          Click a state to highlight it. Drag to rotate. Scroll continues the story.
+          Click a state to highlight it. Drag to rotate. Click or drag on the strip below to anchor a year window while scroll continues within it.
         {:else}
-          Click a state to select it. Drag to rotate · scroll to zoom.
+          Click a state to select it. Drag to rotate, zoom, and click or drag on the strip below to set a year window.
         {/if}
       </p>
     </div>
 
-    <button class="reset-btn" on:click={resetView} type="button">Reset</button>
+    <button class="reset-btn" onclick={resetView} type="button">Reset</button>
   </div>
 
   <div
@@ -706,36 +1001,159 @@
         {#if tooltip.mortality != null}
           <div>Mortality: {formatM(tooltip.mortality)}</div>
         {/if}
-        <div class="tt-hint">click to select this state</div>
+        <div class="tt-hint">click to compare this state across time</div>
       </div>
     {/if}
   </div>
 
-  {#if showYearSlider && availableYears.length > 0}
-    <div class="year-bar">
-      <label>
-        Year:
-        <span class="year-num">{activeYear}</span>
-      </label>
+  {#if availableYears.length > 0}
+    <div class="timeline-card">
+      <div class="timeline-header">
+        <div class="timeline-series-legend">
+          <span class="series-pill avg">
+            <span class="series-swatch"></span>
+            U.S. average
+          </span>
+          <span class="series-pill state">
+            <span class="series-swatch"></span>
+            {focusStateName} ({focusStateCode})
+          </span>
+        </div>
 
-      <input
-        type="range"
-        min={availableYears[0]}
-        max={availableYears[availableYears.length - 1]}
-        value={activeYear}
-        step="1"
-        on:input={onYearInput}
-      />
+        <div class="timeline-meta">
+          <span class="timeline-year-pill">Year {activeYear}</span>
+          <span class="timeline-range-pill">{brushRangeLabel}</span>
+        </div>
+      </div>
 
-      <span class="year-range">
-        {availableYears[0]}–{availableYears[availableYears.length - 1]}
-      </span>
+      <svg
+        class="timeline-svg"
+        bind:this={brushSvgEl}
+        viewBox={`0 0 ${BRUSH_W} ${BRUSH_H}`}
+        preserveAspectRatio="none"
+      >
+        {#each brushYTicks as tick}
+          <line
+            class="timeline-grid"
+            x1={BRUSH_MARGIN.left}
+            x2={BRUSH_W - BRUSH_MARGIN.right}
+            y1={brushYScale(tick)}
+            y2={brushYScale(tick)}
+          />
+          <text
+            class="timeline-y-tick"
+            x={BRUSH_MARGIN.left - 10}
+            y={brushYScale(tick)}
+            dy="0.32em"
+            text-anchor="end"
+          >
+            {formatBrushValue(tick)}
+          </text>
+        {/each}
+
+        <rect
+          class="brush-selection-fill"
+          x={brushSelectionLeft}
+          y={BRUSH_MARGIN.top}
+          width={Math.max(yearStepPx, brushSelectionRight - brushSelectionLeft)}
+          height={BRUSH_H - BRUSH_MARGIN.top - BRUSH_MARGIN.bottom}
+        />
+
+        <path class="timeline-line avg" d={nationalAveragePath}></path>
+        <path class="timeline-line state" d={focusStatePath}></path>
+
+        {#each nationalAverageSeries as point (point.year)}
+          {#if point.value != null}
+            <circle
+              class="timeline-point avg"
+              cx={brushXScale(point.year)}
+              cy={brushYScale(point.value)}
+              r={point.year === activeYear ? 4.6 : 3.1}
+            ></circle>
+          {/if}
+        {/each}
+
+        {#each focusStateSeries as point (point.year)}
+          {#if point.value != null}
+            <circle
+              class="timeline-point state"
+              cx={brushXScale(point.year)}
+              cy={brushYScale(point.value)}
+              r={point.year === activeYear ? 4.8 : 3.2}
+            ></circle>
+          {/if}
+        {/each}
+
+        <line
+          class="timeline-playhead"
+          x1={brushCurrentYearX}
+          x2={brushCurrentYearX}
+          y1={BRUSH_MARGIN.top}
+          y2={BRUSH_H - BRUSH_MARGIN.bottom}
+        />
+
+        {#if brushCurrentAverage != null}
+          <circle
+            class="timeline-current-dot avg"
+            cx={brushCurrentYearX}
+            cy={brushYScale(brushCurrentAverage)}
+            r="5.4"
+          ></circle>
+        {/if}
+
+        {#if brushCurrentStateValue != null}
+          <circle
+            class="timeline-current-dot state"
+            cx={brushCurrentYearX}
+            cy={brushYScale(brushCurrentStateValue)}
+            r="5.8"
+          ></circle>
+        {/if}
+
+        <rect
+          class="brush-overlay"
+          x={BRUSH_MARGIN.left}
+          y={BRUSH_MARGIN.top}
+          width={BRUSH_W - BRUSH_MARGIN.left - BRUSH_MARGIN.right}
+          height={BRUSH_H - BRUSH_MARGIN.top - BRUSH_MARGIN.bottom}
+          onpointerdown={beginBrushInteraction}
+        />
+
+        {#each brushXTicks as tick}
+          <line
+            class="timeline-axis-tick"
+            x1={brushXScale(tick)}
+            x2={brushXScale(tick)}
+            y1={BRUSH_H - BRUSH_MARGIN.bottom}
+            y2={BRUSH_H - BRUSH_MARGIN.bottom + 8}
+          />
+          <text
+            class="timeline-x-tick"
+            x={brushXScale(tick)}
+            y={BRUSH_H - BRUSH_MARGIN.bottom + 24}
+            text-anchor="middle"
+          >
+            {tick}
+          </text>
+        {/each}
+      </svg>
+
+      <div class="timeline-footer">
+        <p class="timeline-label">{brushRangeLabel}</p>
+        <p class="timeline-instruction">
+          {#if storyMode}
+            Click to set a start year, then drag in either direction. The blue playhead follows your drag, and scroll continues inside that window.
+          {:else}
+            Click to isolate a single year, or drag in either direction to define a year window and scrub through it.
+          {/if}
+        </p>
+      </div>
     </div>
   {/if}
 
   <div class="legend-row">
     <span class="legend-title">Mortality</span>
-    <span class="grad" />
+    <span class="grad"></span>
     <span class="legend-min">low</span>
     <span class="legend-max">high</span>
     <span class="dot-sep">•</span>
@@ -879,41 +1297,184 @@
     font-weight: 650;
   }
 
-  .year-bar {
-    display: grid;
-    grid-template-columns: auto minmax(140px, 1fr) auto;
+  .timeline-card {
+    margin-top: 16px;
+    padding: 14px 14px 10px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(203, 213, 225, 0.62);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  }
+
+  .timeline-header {
+    display: flex;
     align-items: center;
-    gap: 12px;
-    margin-top: 14px;
-    padding: 10px 12px;
-    font-size: 0.88rem;
-    color: #475569;
-    background: rgba(255, 255, 255, 0.74);
-    border: 1px solid rgba(203, 213, 225, 0.56);
-    border-radius: 14px;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 10px;
   }
 
-  .year-bar label {
-    white-space: nowrap;
-    font-weight: 650;
+  .timeline-series-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
-  .year-bar input[type="range"] {
-    width: 100%;
-    accent-color: #c2410c;
-    cursor: pointer;
-  }
-
-  .year-num {
-    font-weight: 800;
-    color: #c2410c;
-    margin-left: 4px;
-  }
-
-  .year-range {
-    color: #64748b;
+  .series-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
     font-size: 0.78rem;
-    white-space: nowrap;
+    font-weight: 700;
+    color: #334155;
+    background: rgba(248, 250, 252, 0.92);
+    border: 1px solid rgba(203, 213, 225, 0.8);
+  }
+
+  .series-swatch {
+    width: 18px;
+    height: 3px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .series-pill.avg {
+    color: #334155;
+  }
+
+  .series-pill.state {
+    color: #b91c1c;
+  }
+
+  .timeline-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .timeline-year-pill,
+  .timeline-range-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(248, 250, 252, 0.92);
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 750;
+  }
+
+  .timeline-year-pill {
+    color: #c2410c;
+  }
+
+  .timeline-svg {
+    width: 100%;
+    height: 176px;
+    display: block;
+    overflow: visible;
+  }
+
+  .timeline-grid {
+    stroke: rgba(148, 163, 184, 0.22);
+    stroke-width: 1;
+  }
+
+  .timeline-y-tick,
+  .timeline-x-tick {
+    fill: #64748b;
+    font-size: 11px;
+    font-weight: 550;
+  }
+
+  .timeline-axis-tick {
+    stroke: rgba(100, 116, 139, 0.56);
+    stroke-width: 1.25;
+  }
+
+  .timeline-line {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .timeline-line.avg {
+    stroke: rgba(51, 65, 85, 0.82);
+    stroke-width: 2.2;
+  }
+
+  .timeline-line.state {
+    stroke: #c2410c;
+    stroke-width: 2.8;
+  }
+
+  .timeline-point.avg {
+    fill: rgba(71, 85, 105, 0.68);
+  }
+
+  .timeline-point.state {
+    fill: rgba(194, 65, 12, 0.72);
+  }
+
+  .timeline-current-dot {
+    stroke: white;
+    stroke-width: 2.2;
+  }
+
+  .timeline-current-dot.avg {
+    fill: #334155;
+  }
+
+  .timeline-current-dot.state {
+    fill: #dc2626;
+  }
+
+  .timeline-playhead {
+    stroke: rgba(29, 78, 216, 0.9);
+    stroke-width: 2;
+    stroke-dasharray: 4 4;
+  }
+
+  .brush-selection-fill {
+    fill: rgba(148, 163, 184, 0.18);
+    stroke: rgba(100, 116, 139, 0.14);
+    stroke-width: 1;
+    rx: 10;
+  }
+
+  .brush-overlay {
+    fill: transparent;
+    cursor: crosshair;
+  }
+
+  .timeline-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-top: 2px;
+    text-align: center;
+  }
+
+  .timeline-label {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.1;
+    font-weight: 850;
+    color: #0f172a;
+  }
+
+  .timeline-instruction {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.84rem;
+    line-height: 1.45;
   }
 
   .legend-row {
@@ -972,9 +1533,13 @@
       align-self: flex-start;
     }
 
-    .year-bar {
-      grid-template-columns: 1fr;
-      gap: 8px;
+    .timeline-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .timeline-meta {
+      justify-content: flex-start;
     }
   }
 </style>
