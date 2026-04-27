@@ -14,6 +14,7 @@
   export let showYearSlider: boolean = true;
   export let storyMode: boolean = false;
   export let storyProgress: number = 0;
+  export let active: boolean = true;
 
   $: showYearSlider;
   $: storyProgress;
@@ -860,14 +861,13 @@
     if (hits.length) {
       const code = hits[0].object.userData.code as string;
       hoverCode = code;
-
-      const row = mortRows.find((r) => r.state === code && r.year === activeYear);
+      const mortality = yearStateMortality.get(activeYear)?.get(code) ?? null;
 
       tooltip = {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
         code,
-        mortality: row?.mortality ?? null,
+        mortality,
       };
 
       renderer.domElement.style.cursor = "pointer";
@@ -887,11 +887,16 @@
   function animate() {
     frameId = requestAnimationFrame(animate);
 
+    if (!active) return;
+
+    const depthEase = storyMode ? 0.22 : 0.12;
+    const liftEase = storyMode ? 0.24 : 0.18;
+
     for (const s of states3D) {
       const diff = s.targetDepth - s.currentDepth;
 
       if (Math.abs(diff) > 0.005) {
-        s.currentDepth += diff * 0.12;
+        s.currentDepth += diff * depthEase;
       } else {
         s.currentDepth = s.targetDepth;
       }
@@ -901,7 +906,7 @@
       const hovered = hoverCode === s.code;
       const selected = selectedCode === s.code;
       const targetLift = selected ? SELECT_LIFT : hovered ? SELECT_LIFT * 0.55 : 0;
-      s.mesh.position.z += (targetLift - s.mesh.position.z) * 0.18;
+      s.mesh.position.z += (targetLift - s.mesh.position.z) * liftEase;
 
       const mats = s.mesh.material as THREE.MeshStandardMaterial[];
       const topMat = mats[0];
@@ -956,6 +961,11 @@
     controls.enableZoom = !storyMode;
     controls.enablePan = !storyMode;
     controls.enableRotate = true;
+  }
+
+  $: if (active && renderer && scene && camera) {
+    onResize();
+    renderer.render(scene, camera);
   }
 </script>
 

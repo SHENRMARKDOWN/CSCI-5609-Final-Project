@@ -96,11 +96,15 @@
   let loading = true;
   let error: string | null = null;
   let tooltip: TooltipState | null = null;
+  let mortalityByYear = new Map<number, MortalityRow[]>();
+  let lastAppliedStoryStep = -1;
   const W = 1100, H = 560;
   const oX = 30,
     oY = 60;
   const formatM = d3.format(".1f");
   const fallbackYear = 2019;
+  const DEFAULT_GUIDED_BOX_X = 670;
+  const DEFAULT_GUIDED_BOX_Y = 60;
   function getName(f: GeoJSON.Feature): string {
     return f?.properties?.name ?? f?.properties?.NAME ?? "";
   }
@@ -169,6 +173,9 @@
         d3.json(asset("/data/us-states.geojson")),
       ]);
       mortalityRows = rows.filter((r) => Number.isFinite(r.mortality));
+      mortalityByYear = new Map(
+        Array.from(d3.group(mortalityRows, (row) => row.year))
+      );
       mapFeatures = (usStates as GeoJSON.FeatureCollection).features.filter(
         (f) => getName(f) !== "Puerto Rico",
       );
@@ -199,30 +206,27 @@
 
   $: msCentroid = centroids.find((c) => c.code === "MS");
 
-  $: if (storyMode && storyStep != null) {
-    if (storyStep === 5) {
-      selectedState.set(null);
-      selectedYear.set(2019);
-    }
-
-    if (storyStep === 6 && msCentroid) {
-      selectedState.set("MS");
-      selectedYear.set(2019);
-
-      const cx = msCentroid.x + oX;
-      const cy = msCentroid.y + oY;
-
-      const targetX = cx - boxW / 2;
-      const targetY = cy - boxH / 2;
-
-      const clampedX = Math.max(0, Math.min(W - boxW, targetX));
-      const clampedY = Math.max(0, Math.min(H - boxH, targetY));
-
-      boxX.set(clampedX);
-      boxY.set(clampedY);
+  $: if (!storyMode) {
+    lastAppliedStoryStep = -1;
+  }
+  $: if (storyMode && storyStep != null && storyStep !== lastAppliedStoryStep) {
+    lastAppliedStoryStep = storyStep;
+    if (storyStep === 5 && !dragging) {
+      moveSelectionBox(DEFAULT_GUIDED_BOX_X, DEFAULT_GUIDED_BOX_Y, true);
     }
   }
-  $: mortForYear = mortalityRows.filter((r) => r.year === activeYear);
+  $: if (storyMode && storyStep === 6 && msCentroid && !dragging) {
+    const target = getCenteredBoxCoordinates(msCentroid);
+    const progress = cubicOut(
+      Math.min(1, Math.max(0, (storyProgress - 0.04) / 0.58))
+    );
+    moveSelectionBox(
+      DEFAULT_GUIDED_BOX_X + (target.x - DEFAULT_GUIDED_BOX_X) * progress,
+      DEFAULT_GUIDED_BOX_Y + (target.y - DEFAULT_GUIDED_BOX_Y) * progress,
+      true
+    );
+  }
+  $: mortForYear = mortalityByYear.get(activeYear) ?? [];
   $: mortMap = new Map(mortForYear.map((r) => [r.state, r.mortality]));
   $: vals = mortForYear.map((r) => r.mortality);
   $: minM = d3.min(vals) ?? 0;
@@ -239,8 +243,8 @@
   const tileGlyphR = 18,
     tileRingR = 24;
   // Draggable box
-  const boxX = tweened(670, { duration: 600, easing: cubicOut });
-  const boxY = tweened(60, { duration: 600, easing: cubicOut });
+  const boxX = tweened(DEFAULT_GUIDED_BOX_X, { duration: 600, easing: cubicOut });
+  const boxY = tweened(DEFAULT_GUIDED_BOX_Y, { duration: 600, easing: cubicOut });
 
   let boxW = 220,
     boxH = 280;
@@ -285,6 +289,39 @@
     dragging = null;
     window.removeEventListener("mousemove", onDrag);
     window.removeEventListener("mouseup", endDrag);
+  }
+
+  function moveSelectionBox(
+    x: number,
+    y: number,
+    instant = false,
+    durationOverride?: number
+  ) {
+    const duration = instant ? 0 : (durationOverride ?? 600);
+    boxX.set(x, { duration, easing: cubicOut });
+    boxY.set(y, { duration, easing: cubicOut });
+  }
+
+  function getCenteredBoxCoordinates(centroid: Centroid) {
+    const cx = centroid.x + oX;
+    const cy = centroid.y + oY;
+
+    const targetX = cx - boxW / 2;
+    const targetY = cy - boxH / 2;
+
+    return {
+      x: Math.max(0, Math.min(W - boxW, targetX)),
+      y: Math.max(0, Math.min(H - boxH, targetY)),
+    };
+  }
+
+  function centerSelectionBoxOnState(
+    centroid: Centroid,
+    instant = false,
+    durationOverride?: number
+  ) {
+    const { x, y } = getCenteredBoxCoordinates(centroid);
+    moveSelectionBox(x, y, instant, durationOverride);
   }
   $: insideStates = centroids
     .filter((c) => {

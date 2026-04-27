@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { fade, fly } from "svelte/transition";
 
   import BumpChart from "$lib/components/BumpChart.svelte";
@@ -162,6 +162,7 @@
   let vizTransitioning = false;
   let vizTransitionDirection: "forward" | "backward" = "forward";
   let vizTransitionTimer = 0;
+  let pendingStoryStateToken = 0;
 
   let userMode = false;
   let mounted = false;
@@ -347,6 +348,23 @@
     }, VIZ_STEP_TRANSITION_MS);
   }
 
+  function syncStoryState(nextStep: number, previousStep: number) {
+    const token = ++pendingStoryStateToken;
+    const previousKey = getVizComponentKey(previousStep);
+    const nextKey = getVizComponentKey(nextStep);
+
+    if (previousKey === nextKey || previousStep <= 0) {
+      applyStoryState(nextStep);
+      return;
+    }
+
+    void tick().then(() => {
+      if (token !== pendingStoryStateToken) return;
+      if (currentStep !== nextStep) return;
+      applyStoryState(nextStep);
+    });
+  }
+
   function resetToIntro() {
     clearIntroTimer();
     clearVizTransitionTimer();
@@ -456,10 +474,17 @@
     });
   }
 
+  function getRenderedStepEls() {
+    if (!textColumnEl) return [];
+    return Array.from(
+      textColumnEl.querySelectorAll<HTMLDivElement>(".step[data-step]")
+    );
+  }
+
   function updateScrollState() {
     if (currentStep === 0 || !textColumnEl) return;
 
-    const validStepEls = stepEls.filter(Boolean) as HTMLDivElement[];
+    const validStepEls = getRenderedStepEls();
     if (validStepEls.length === 0) return;
 
     const scrollTop = textColumnEl.scrollTop;
@@ -496,8 +521,8 @@
 
     if (nextStep !== currentStep) {
       const previousStep = currentStep;
-      applyStoryState(nextStep);
       currentStep = nextStep;
+      syncStoryState(nextStep, previousStep);
 
       if (getVizComponentKey(previousStep) !== getVizComponentKey(nextStep)) {
         triggerVizTransition(previousStep, nextStep);
@@ -594,7 +619,9 @@
     mounted = true;
     window.scrollTo(0, 0);
 
-    scheduleUpdate();
+    void tick().then(() => {
+      scheduleUpdate();
+    });
 
     textColumnEl?.addEventListener("scroll", scheduleUpdate, { passive: true });
     textColumnEl?.addEventListener("wheel", handleTextColumnWheelForIntro, {
@@ -722,13 +749,9 @@
   class:transition-backward={vizTransitionDirection === "backward"}
 >
   {#key getVizComponentKey(currentStep)}
-    <div
-      class="viz-stage"
-      in:fade={{ duration: 160 }}
-      out:fade={{ duration: 120 }}
-    >
+    <div class="viz-stage">
       {#if currentStep >= 1 && currentStep <= 4}
-        <div class="chart-shell" in:fade={{ duration: 280 }}>
+        <div class="chart-shell">
           <BumpChart
             storyStep={currentStep}
             storyMode={true}
@@ -736,7 +759,7 @@
           />
         </div>
       {:else if currentStep >= 5 && currentStep <= 6}
-        <div class="chart-shell" in:fade={{ duration: 280 }}>
+        <div class="chart-shell">
           <USStrokeMortalityMapV2
             storyStep={currentStep}
             storyMode={true}
@@ -745,7 +768,7 @@
         </div>
 
       {:else if currentStep === 7}
-        <div class="chart-shell" in:fade={{ duration: 280 }}>
+        <div class="chart-shell">
           <USStrokeMortalityMap3D
             storyMode={true}
             showYearSlider={false}
@@ -754,7 +777,7 @@
         </div>
 
       {:else if currentStep >= 8 && currentStep <= 13}
-        <div class="chart-shell" in:fade={{ duration: 280 }}>
+        <div class="chart-shell">
           <DetailLinePlot
             storyStep={currentStep}
             storyMode={true}
@@ -1280,23 +1303,21 @@
   .viz-transition-layer {
     opacity: 1;
     transform: translateY(0);
-    transition:
-      opacity 220ms ease,
-      transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, transform;
+    transition: none;
+    will-change: auto;
     flex: 1; min-height: 0; display: flex; flex-direction: column; /*APR 26*/
   }
 
   .viz-step-transitioning {
-    opacity: 0.78;
+    opacity: 1;
   }
 
   .viz-step-transitioning.transition-forward {
-    transform: translateY(8px);
+    transform: none;
   }
 
   .viz-step-transitioning.transition-backward {
-    transform: translateY(-8px);
+    transform: none;
   }
 
   .chart-shell {

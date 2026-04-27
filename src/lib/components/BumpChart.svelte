@@ -13,6 +13,8 @@
   let legendStates = $state([]); // states to show in legend, depends on selected region
   let lastAppliedStoryStep = -1;
   let showInstructions = $state(false);// APR 26
+  let redrawFrame = 0;
+  let lastDrawSignature = "";
 
   $effect(() => {
   if (!storyMode) return;
@@ -22,42 +24,21 @@
 
   lastAppliedStoryStep = storyStep;
 
-  if (storyStep === 1) {
+  if (selectedRegion !== "All") {
     selectedRegion = "All";
-    selectedState.set(null);
-    selectedYear.set(2019);
+    scheduleRedraw(true);
   }
-
-  if (storyStep === 2) {
-    selectedRegion = "All";
-    selectedState.set(null);
-    selectedYear.set(null);
-  }
-
-  if (storyStep === 3) {
-    selectedRegion = "All";
-    selectedState.set(null);
-    selectedYear.set(null);
-  }
-
-  if (storyStep === 4) {
-    selectedRegion = "All";
-    selectedState.set("MS");
-    selectedYear.set(null);
-  }
-
-  redraw();
 });
 
 
 
   onMount(() => {
     const unsubscribeState = selectedState.subscribe(() => {
-      if (originalData.length > 0) redraw();
+      if (originalData.length > 0) scheduleRedraw();
     });
 
     const unsubscribeYear = selectedYear.subscribe(() => {
-      if (originalData.length > 0) redraw();
+      if (originalData.length > 0) scheduleRedraw();
     });
 
     (async () => {
@@ -71,11 +52,14 @@
       );
 
       originalData = raw;
-      selectedYear.update((curr) => curr ?? 2019);
-      redraw();
+      if (!storyMode) {
+        selectedYear.update((curr) => curr ?? 2019);
+      }
+      scheduleRedraw(true);
     })();
 
     return () => {
+      if (redrawFrame) cancelAnimationFrame(redrawFrame);
       unsubscribeState();
       unsubscribeYear();
     };
@@ -510,6 +494,28 @@ const xAxisG = svgEl
     const ranked = computeRankWithinRegion(originalData, selectedRegion);
     draw(ranked);
   }
+
+  function getDrawSignature() {
+    return [
+      selectedRegion,
+      get(selectedState) ?? "none",
+      get(selectedYear) ?? "all",
+      storyMode ? "guided" : "free",
+    ].join("|");
+  }
+
+  function scheduleRedraw(force = false) {
+    if (!svg || originalData.length === 0) return;
+    if (redrawFrame) return;
+
+    redrawFrame = requestAnimationFrame(() => {
+      redrawFrame = 0;
+      const signature = getDrawSignature();
+      if (!force && signature === lastDrawSignature) return;
+      lastDrawSignature = signature;
+      redraw();
+    });
+  }
 </script>
 
 <div class="vis-container">
@@ -530,32 +536,32 @@ const xAxisG = svgEl
 {/if}
 
     <div class="filter-buttons">
-      <button on:click={() => {selectedRegion = "All";redraw();}}
+      <button on:click={() => {selectedRegion = "All";scheduleRedraw(true);}}
       class:selected={selectedRegion === "All"}>
       Overall
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "Midwest" ? "All" : "Midwest";redraw();}}
+      <button on:click={() => {selectedRegion = selectedRegion === "Midwest" ? "All" : "Midwest";scheduleRedraw(true);}}
       class:selected={selectedRegion === "Midwest"}>
       Midwest
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "Northeast" ? "All" : "Northeast";redraw();}}
+      <button on:click={() => {selectedRegion = selectedRegion === "Northeast" ? "All" : "Northeast";scheduleRedraw(true);}}
       class:selected={selectedRegion === "Northeast"}>
       Northeast
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "Southeast" ? "All" : "Southeast";redraw();}}
+      <button on:click={() => {selectedRegion = selectedRegion === "Southeast" ? "All" : "Southeast";scheduleRedraw(true);}}
       class:selected={selectedRegion === "Southeast"}>
       Southeast
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "Southwest" ? "All" : "Southwest";redraw();}}
+      <button on:click={() => {selectedRegion = selectedRegion === "Southwest" ? "All" : "Southwest";scheduleRedraw(true);}}
       class:selected={selectedRegion === "Southwest"}>
       Southwest
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "West" ? "All" : "West";redraw();}}
+      <button on:click={() => {selectedRegion = selectedRegion === "West" ? "All" : "West";scheduleRedraw(true);}}
       class:selected={selectedRegion === "West"}>
       West
     </button>
