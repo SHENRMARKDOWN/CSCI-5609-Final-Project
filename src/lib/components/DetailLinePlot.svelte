@@ -12,6 +12,8 @@
     } from "$lib/stores";
     export let storyStep: number | null = null;
     export let storyMode: boolean = false;
+
+    let showInstructions = false;
     
     type Vis3Mode = "overall" | "sex" | "race" | "county";
     type AgeGroup = "35+" | "35-64" | "65+";
@@ -1174,16 +1176,25 @@ function getDirectLabelWeight(id: string) {
   </script>
   
   <div class="detail-panel" bind:this={containerEl}>
-    <div class="panel-header">
-      <div>
-        <h3 class="panel-title">{panelTitle}</h3>
-        <p class="panel-subtitle">{subtitle}</p>
-      </div>
-  
+  <div class="panel-header">
+    <div>
+      <h3 class="panel-title">{panelTitle}</h3>
+    </div>
+    <div class="header-right">
       {#if $selectedState}
         <div class="state-chip">{stateName} ({$selectedState})</div>
       {/if}
+      <button class="info-btn" onclick={() => showInstructions = !showInstructions}>ℹ</button>
     </div>
+  </div>
+
+  {#if showInstructions}
+    <div class="instructions-popup">
+      <button class="close-btn" onclick={() => showInstructions = false}>✕</button>
+      <p>{subtitle}</p>
+      <p><strong>How to use:</strong> select a state in Visualization 1, choose a comparison mode, then add subgroup lines with the legend or county selector.</p>
+    </div>
+  {/if}
   
     <div class="control-row">
       <div class="control-group">
@@ -1279,140 +1290,9 @@ function getDirectLabelWeight(id: string) {
     {:else if !seriesMeta.length}
       <div class="message-box">No data are available for this state and selection.</div>
     {:else}
-      {#if $selectedVis3Mode === "sex" || $selectedVis3Mode === "race"}
-        <div class="legend-panel">
-          <div class="legend-title">
-            {$selectedVis3Mode === "race"
-              ? "Click subgroup labels to add or remove comparison lines. The dashed gray line remains as the state baseline, and the newest or hovered race subgroup is emphasized."
-              : "Click subgroup labels to add or remove comparison lines. The dashed gray line remains as the state baseline."}
-          </div>
   
-          <div class="reference-note">
-            <span class="line-swatch baseline"></span>
-            <span>State baseline</span>
-          </div>
+      <div class="chart-area">
 
-          {#if $selectedVis3Mode === "race" && activeRaceIds.length > 1}
-            <div class="focus-hint">
-              The newest race line stays highlighted. Hover a subgroup label or line to bring that subgroup forward.
-            </div>
-          {/if}
-  
-          <div class="legend-items">
-            {#each subgroupLegendItems as item (item.id)}
-              <button
-                type="button"
-                aria-pressed={activeSeriesIds.includes(item.id)}
-                class:selected={activeSeriesIds.includes(item.id)}
-                class:focus-chip={$selectedVis3Mode === "race" && raceFocusId === item.id}
-                class="legend-chip"
-                onmouseenter={() => setHoveredSeries(item.id)}
-                onmouseleave={() => setHoveredSeries(null)}
-                onclick={() => toggleSeries(item.id)}
-              >
-                <span class="swatch" style={`background:${getSeriesColor(item)};`}></span>
-                {item.label}
-              </button>
-            {/each}
-          </div>
-        </div>
-      {/if}
-  
-      {#if $selectedVis3Mode === "county"}
-        <div class="legend-panel">
-          <div class="legend-title">
-            Add up to {MAX_VISIBLE_COUNTIES} counties. The dashed gray line remains as the state average for the selected age group, and the newest or hovered county is emphasized.
-          </div>
-  
-          <div class="reference-note">
-            <span class="line-swatch baseline"></span>
-            <span>State average</span>
-          </div>
-  
-          <div class="county-toolbar">
-            <div class="county-input-group">
-              <label for="county-select">Add county</label>
-              <select
-                id="county-select"
-                bind:value={countyToAdd}
-                onchange={() => addCounty(countyToAdd)}
-                disabled={countyLimitReached}
-              >
-                <option value="">Choose a county…</option>
-                {#each countyOptions as county (county.id)}
-                  <option value={county.id}>{county.label}</option>
-                {/each}
-              </select>
-            </div>
-  
-            <button
-              type="button"
-              class="clear-btn"
-              onclick={clearCounties}
-              disabled={!activeCountyIds.length}
-            >
-              Clear counties
-            </button>
-          </div>
-  
-          <div class="selection-status">
-            Showing {activeCountyIds.length} of {MAX_VISIBLE_COUNTIES} allowed counties
-            {#if countyLimitReached}
-              — remove one county to add another.
-            {/if}
-          </div>
-
-          {#if activeCountyIds.length > 1}
-            <div class="focus-hint">
-              The newest county stays highlighted. Hover a county chip or line to bring that county forward.
-            </div>
-          {/if}
-  
-          <div class="suggestion-block">
-            <span class="control-label">Suggested counties</span>
-            <div class="legend-items">
-              {#each suggestedCounties as county (county.id)}
-                <button
-                  type="button"
-                  aria-pressed={activeSeriesIds.includes(county.id)}
-                  class:selected={activeSeriesIds.includes(county.id)}
-                  class:focus-chip={countyFocusId === county.id}
-                  class="legend-chip"
-                  onmouseenter={() => setHoveredSeries(county.id)}
-                  onmouseleave={() => setHoveredSeries(null)}
-                  onclick={() => toggleCounty(county.id)}
-                  disabled={countyLimitReached && !activeSeriesIds.includes(county.id)}
-                >
-                  <span class="swatch" style={`background:${getCountyChipColor(county.id)};`}></span>
-                  {county.label}
-                </button>
-              {/each}
-            </div>
-          </div>
-  
-          {#if activeCountyIds.length}
-            <div class="suggestion-block">
-              <span class="control-label">Visible counties</span>
-              <div class="legend-items">
-                {#each activeCountySeries as county (county.id)}
-                  <button
-                    type="button"
-                    class:focus-chip={countyFocusId === county.id}
-                    class="legend-chip selected"
-                    onmouseenter={() => setHoveredSeries(county.id)}
-                    onmouseleave={() => setHoveredSeries(null)}
-                    onclick={() => removeCounty(county.id)}
-                  >
-                    <span class="swatch" style={`background:${getCountyLineColor(county.id)};`}></span>
-                    {county.label} ×
-                  </button>
-                {/each}
-              </div>
-            </div>
-          {/if}
-        </div>
-      {/if}
-  
       <div class="chart-wrapper">
         <svg
           class="chart-svg"
@@ -1587,18 +1467,145 @@ function getDirectLabelWeight(id: string) {
           </div>
         {/if}
       </div>
+
+      {#if $selectedVis3Mode === "sex" || $selectedVis3Mode === "race"}
+        <div class="legend-panel">
+          <div class="legend-title">
+            {$selectedVis3Mode === "race"
+              ? "Click subgroup labels to add or remove comparison lines. The dashed gray line remains as the state baseline, and the newest or hovered race subgroup is emphasized."
+              : "Click subgroup labels to add or remove comparison lines. The dashed gray line remains as the state baseline."}
+          </div>
   
-      <div class="note-block">
-        <div>
-          <strong>How to use:</strong> select a state in Visualization 1, choose a comparison mode, then add subgroup lines with the legend or county selector.
+          <div class="reference-note">
+            <span class="line-swatch baseline"></span>
+            <span>State baseline</span>
+          </div>
+
+          {#if $selectedVis3Mode === "race" && activeRaceIds.length > 1}
+            <div class="focus-hint">
+              The newest race line stays highlighted. Hover a subgroup label or line to bring that subgroup forward.
+            </div>
+          {/if}
+  
+          <div class="legend-items">
+            {#each subgroupLegendItems as item (item.id)}
+              <button
+                type="button"
+                aria-pressed={activeSeriesIds.includes(item.id)}
+                class:selected={activeSeriesIds.includes(item.id)}
+                class:focus-chip={$selectedVis3Mode === "race" && raceFocusId === item.id}
+                class="legend-chip"
+                onmouseenter={() => setHoveredSeries(item.id)}
+                onmouseleave={() => setHoveredSeries(null)}
+                onclick={() => toggleSeries(item.id)}
+              >
+                <span class="swatch" style={`background:${getSeriesColor(item)};`}></span>
+                {item.label}
+              </button>
+            {/each}
+          </div>
         </div>
-        <div>
-          <strong>Interpretation:</strong> {dataNote}
+      {/if}
+  
+      {#if $selectedVis3Mode === "county"}
+        <div class="legend-panel">
+          <div class="legend-title">
+            Add up to {MAX_VISIBLE_COUNTIES} counties. The dashed gray line remains as the state average for the selected age group, and the newest or hovered county is emphasized.
+          </div>
+  
+          <div class="reference-note">
+            <span class="line-swatch baseline"></span>
+            <span>State average</span>
+          </div>
+  
+          <div class="county-toolbar">
+            <div class="county-input-group">
+              <label for="county-select">Add county</label>
+              <select
+                id="county-select"
+                bind:value={countyToAdd}
+                onchange={() => addCounty(countyToAdd)}
+                disabled={countyLimitReached}
+              >
+                <option value="">Choose a county…</option>
+                {#each countyOptions as county (county.id)}
+                  <option value={county.id}>{county.label}</option>
+                {/each}
+              </select>
+            </div>
+  
+            <button
+              type="button"
+              class="clear-btn"
+              onclick={clearCounties}
+              disabled={!activeCountyIds.length}
+            >
+              Clear counties
+            </button>
+          </div>
+  
+          <div class="selection-status">
+            Showing {activeCountyIds.length} of {MAX_VISIBLE_COUNTIES} allowed counties
+            {#if countyLimitReached}
+              — remove one county to add another.
+            {/if}
+          </div>
+
+          {#if activeCountyIds.length > 1}
+            <div class="focus-hint">
+              The newest county stays highlighted. Hover a county chip or line to bring that county forward.
+            </div>
+          {/if}
+  
+          <div class="suggestion-block">
+            <span class="control-label">Suggested counties</span>
+            <div class="legend-items">
+              {#each suggestedCounties as county (county.id)}
+                <button
+                  type="button"
+                  aria-pressed={activeSeriesIds.includes(county.id)}
+                  class:selected={activeSeriesIds.includes(county.id)}
+                  class:focus-chip={countyFocusId === county.id}
+                  class="legend-chip"
+                  onmouseenter={() => setHoveredSeries(county.id)}
+                  onmouseleave={() => setHoveredSeries(null)}
+                  onclick={() => toggleCounty(county.id)}
+                  disabled={countyLimitReached && !activeSeriesIds.includes(county.id)}
+                >
+                  <span class="swatch" style={`background:${getCountyChipColor(county.id)};`}></span>
+                  {county.label}
+                </button>
+              {/each}
+            </div>
+          </div>
+  
+          {#if activeCountyIds.length}
+            <div class="suggestion-block">
+              <span class="control-label">Visible counties</span>
+              <div class="legend-items">
+                {#each activeCountySeries as county (county.id)}
+                  <button
+                    type="button"
+                    class:focus-chip={countyFocusId === county.id}
+                    class="legend-chip selected"
+                    onmouseenter={() => setHoveredSeries(county.id)}
+                    onmouseleave={() => setHoveredSeries(null)}
+                    onclick={() => removeCounty(county.id)}
+                  >
+                    <span class="swatch" style={`background:${getCountyLineColor(county.id)};`}></span>
+                    {county.label} ×
+                  </button>
+                {/each}
+              </div>
+            </div>
+          {/if}
         </div>
-        <div>
-          <strong>Takeaway:</strong> {takeawayText}
-        </div>
+      {/if}
+
+      
       </div>
+  
+      
     {/if}
   </div>
   
@@ -1606,9 +1613,14 @@ function getDirectLabelWeight(id: string) {
     .detail-panel {
       border: 1px solid #d9d9d9;
       border-radius: 14px;
-      padding: 20px 20px 18px;
+      padding: 16px 20px 12px;
       background: #fff;
       position: relative;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
   
     .panel-header {
@@ -1715,19 +1727,29 @@ function getDirectLabelWeight(id: string) {
     }
   
     .legend-panel {
-      border: 1px solid #ececec;
-      border-radius: 12px;
-      background: #fcfcfc;
-      padding: 14px 14px 12px;
-      margin-bottom: 14px;
-    }
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  background: #fcfcfc;
+  padding: 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+  box-sizing: border-box;
+  width: 200px;
+  flex-shrink: 0;
+}
   
     .legend-title {
-      font-size: 0.95rem;
-      color: #555;
-      margin-bottom: 10px;
-      line-height: 1.45;
-    }
+  font-size: 0.75rem;
+  color: #555;
+  line-height: 1.3;
+  word-break: break-word;
+  max-width: 100%;
+  flex-shrink: unset;
+}
 
     .focus-hint {
       margin-top: 8px;
@@ -1738,14 +1760,15 @@ function getDirectLabelWeight(id: string) {
     }
   
     .reference-note {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-      color: #555;
-      font-size: 0.93rem;
-      font-weight: 600;
-    }
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #555;
+  font-size: 0.88rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
   
     .line-swatch {
       width: 28px;
@@ -1757,12 +1780,6 @@ function getDirectLabelWeight(id: string) {
   
     .line-swatch.baseline {
       border-top-color: #7a7a7a;
-    }
-  
-    .legend-items {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
     }
   
     .swatch {
@@ -1779,32 +1796,10 @@ function getDirectLabelWeight(id: string) {
       gap: 8px;
     }
   
-    .county-toolbar {
-      display: flex;
-      gap: 14px;
-      align-items: end;
-      flex-wrap: wrap;
-    }
-  
-    .county-input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-width: 260px;
-    }
-  
     .county-input-group label {
       font-size: 0.92rem;
       color: #555;
       font-weight: 600;
-    }
-  
-    .county-input-group select {
-      border: 1px solid #bfbfbf;
-      border-radius: 10px;
-      padding: 8px 10px;
-      font: inherit;
-      background: #fff;
     }
   
     .selection-status {
@@ -1819,12 +1814,14 @@ function getDirectLabelWeight(id: string) {
   
     .chart-wrapper {
       position: relative;
-      margin-top: 12px;
+      flex: 1;
+      min-height: 0;
+      margin-top: 8px;
     }
   
     .chart-svg {
       width: 100%;
-      height: auto;
+      height: 100%;
       display: block;
       border: 1px solid #efefef;
       border-radius: 12px;
@@ -1892,6 +1889,106 @@ function getDirectLabelWeight(id: string) {
       background: #fff7f7;
       border-color: #e4b7b7;
     }
+
+    .header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.info-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #999;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.instructions-popup {
+  position: absolute;
+  top: 52px;
+  right: 20px;
+  z-index: 20;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  max-width: 340px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.instructions-popup p { margin: 0 0 8px 0; }
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #888;
+}
+
+.chart-area {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+
+.chart-wrapper {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 0;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.county-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+.county-input-group select {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.8rem;
+  border: 1px solid #bfbfbf;
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.county-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
   
     @media (max-width: 920px) {
       .detail-panel {

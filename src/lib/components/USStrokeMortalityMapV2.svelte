@@ -11,6 +11,8 @@
   export let storyStep: number | null = null;
   export let storyMode: boolean = false;
 
+  let showInstructions = false;
+
   interface MortalityRow {
     state: string;
     year: number;
@@ -91,8 +93,7 @@
   let loading = true;
   let error: string | null = null;
   let tooltip: TooltipState | null = null;
-  const W = 1100,
-    H = 700;
+  const W = 1100, H = 560;
   const oX = 30,
     oY = 60;
   const formatM = d3.format(".1f");
@@ -169,8 +170,8 @@
         (f) => getName(f) !== "Puerto Rico",
       );
       projection = d3
-        .geoAlbersUsa()
-        .fitSize([W - 80, H - 120], {
+      .geoAlbersUsa()
+      .fitSize([W - 80, H - 150], {
           type: "FeatureCollection",
           features: mapFeatures,
         });
@@ -337,29 +338,39 @@
   <p>{error}</p>
 {:else}
   <div class="map-shell">
-    <p class="map-caption">
-      {#if $selectedYear === null}
-        Showing {fallbackYear} until a different year is chosen in Visualization 1.
-      {:else}
-        Year selected in Visualization 1: {$selectedYear}
-      {/if}
-    </p>
+    <div class="map-header-row">
+  <p class="map-caption">
+    {#if $selectedYear === null}
+      Showing {fallbackYear} until a different year is chosen in Visualization 1.
+    {:else}
+      Year selected in Visualization 1: {$selectedYear}
+    {/if}
+  </p>
+  <button class="info-btn" on:click={() => showInstructions = !showInstructions}>ℹ</button>
+</div>
+
+{#if showInstructions}
+  <div class="instructions-popup">
+    <button class="close-btn" on:click={() => showInstructions = false}>✕</button>
+    <p>Each state in the selector box is shown as a glyph: fill color = mortality rate, outer ring = national percentile.</p>
+    <p>Drag the blue selector box to explore any region. States inside are shown with glyph detail.</p>
+    <p>Click any state to highlight it.</p>
+  </div>
+{/if}
 
     <div class="map-container" bind:this={containerEl}>
       <svg
-        width={W}
-        height={H}
-        aria-label="US stroke mortality interactive glyph map"
+      viewBox="0 0 {W} {H}"
+      preserveAspectRatio="xMidYMid meet"
+      style="width:100%; height:auto; display:block;"
+      aria-label="US stroke mortality interactive glyph map"
       >
         <rect width={W} height={H} fill="#fff" />
 
         <text x={24} y={30} font-size="20" font-weight="700" fill="#333"
           >Stroke Mortality by State, {activeYear}</text
         >
-        <text x={24} y={48} font-size="11.5" fill="#666">
-          Drag the selector to explore any region. States inside are shown with
-          glyph detail.
-        </text>
+        
 
         <!-- Choropleth only — no glyphs on map -->
         <g transform="translate({oX},{oY})">
@@ -551,22 +562,38 @@
         </defs>
 
         <!-- Color legend (bottom right) -->
-        <text x={W - 270} y={H - 50} font-size="12" fill="#555">Mortality</text>
+        <text x={W - 270} y={H - 100} font-size="12" fill="#555">Mortality</text>
         <rect
           x={W - 270}
-          y={H - 42}
+          y={H - 85}
           width="220"
           height="12"
           fill="url(#glg)"
           stroke="#d9d9d9"
         />
-        <text x={W - 270} y={H - 16} font-size="11" fill="#666"
+        <text x={W - 270} y={H - 60} font-size="11" fill="#666"
           >{formatM(minM)}</text
         >
-        <text x={W - 50} y={H - 16} font-size="11" fill="#666" text-anchor="end"
+        <text x={W - 50} y={H - 60} font-size="11" fill="#666" text-anchor="end"
           >{formatM(maxM)}</text
         >
-      </svg>
+       </svg>
+      {#if tooltip}
+        <div
+          class="tooltip"
+          style:left={`${tooltip.left}px`}
+          style:top={`${tooltip.top}px`}
+        >
+          <strong>{tooltip.name} ({tooltip.code})</strong>
+          {#if tooltip.mortality !== null}<div>
+              Mortality: {formatM(tooltip.mortality)}
+            </div>{/if}
+          {#if tooltip.percentile !== null}<div>
+              Percentile: {Math.round(tooltip.percentile * 100)}%
+            </div>{/if}
+        </div>
+      {/if}
+    </div> 
 
       <!-- Glyph legend BELOW the SVG, never overlaps map -->
       <div class="glyph-legend">
@@ -639,45 +666,39 @@
         </div>
       </div>
 
-      {#if tooltip}
-        <div
-          class="tooltip"
-          style:left={`${tooltip.left}px`}
-          style:top={`${tooltip.top}px`}
-        >
-          <strong>{tooltip.name} ({tooltip.code})</strong>
-          {#if tooltip.mortality !== null}<div>
-              Mortality: {formatM(tooltip.mortality)}
-            </div>{/if}
-          {#if tooltip.percentile !== null}<div>
-              Percentile: {Math.round(tooltip.percentile * 100)}%
-            </div>{/if}
-        </div>
-      {/if}
-    </div>
-  </div>
+</div> 
 {/if}
+
+
+
 
 <style>
   .map-shell {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 8px;
+}
+
   .map-caption {
     margin: 0;
     color: #555;
     font-size: 0.95rem;
   }
   .map-container {
-    position: relative;
-    display: inline-block;
-    max-width: 100%;
-    border: 1px solid #d9d9d9;
-    border-radius: 14px;
-    background: #fff;
-    overflow: auto;
-  }
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  max-height: 80%;
+  border: 1px solid #d9d9d9;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+
   .glyph-legend {
     padding: 12px 20px 14px;
     border-top: 1px solid #eee;
@@ -738,4 +759,50 @@
   svg {
     display: block;
   }
+  .map-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 5;
+}
+
+.info-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #999;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.instructions-popup {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  z-index: 20;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  max-width: 320px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.instructions-popup p { margin: 0 0 8px 0; }
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #888;
+}
 </style>

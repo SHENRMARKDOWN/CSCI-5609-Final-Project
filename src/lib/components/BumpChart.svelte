@@ -12,6 +12,7 @@
   let originalData = $state([]); // raw data from CSV
   let legendStates = $state([]); // states to show in legend, depends on selected region
   let lastAppliedStoryStep = -1;
+  let showInstructions = $state(false);// APR 26
 
   $effect(() => {
   if (!storyMode) return;
@@ -270,10 +271,10 @@
 
     const currentSelectedState = get(selectedState);
     const currentSelectedYear = get(selectedYear);
-    const margin = { top: 50, right: 80, bottom: 50, left: 180 };// adjust left margin for state labels
+    const margin = { top: 50, right: 80, bottom: 30, left: 180 };// adjust left margin for state labels
 
     const width = 1200;
-    const height = 800;
+    const height = 750;
 
     d3.select(svg).selectAll("*").remove();
 
@@ -510,29 +511,20 @@ const xAxisG = svgEl
 
 <div class="vis-container">
   <div class="vis-header">
-    <h2>Stroke mortality bump chart</h2>
-    
-    <p>
-    This bump chart shows the stroke mortality rank of U.S. states.
-    Higher ranks indicate higher mortality.
-  </p>
 
-  <p>
-    The chart allows you to compare the relative ranking of states over time
-    and observe how they move up or down.
-  </p>
+  <div class="header-row">
+  <h2>Stroke mortality bump chart</h2>
+  <button class="info-btn" on:click={() => showInstructions = !showInstructions}>ℹ</button>
+</div>
 
-  <p>
-    The default view is set to the rankings for the year 2019.
-    Click on year labels or empty space to return to the full trend view.
-  </p>
-
-  <p>
-    Click on state labels or lines to filter by state.
-    Click on years to highlight a specific year.
-  </p>
-
-    <p class="hint">Feel messy? Try our filter!</p>
+{#if showInstructions}
+  <div class="instructions-popup">
+    <button class="close-btn" on:click={() => showInstructions = false}>✕</button>
+    <p>This bump chart shows the stroke mortality rank of U.S. states. Higher ranks indicate higher mortality.</p>
+    <p>The default view is set to 2019. Click year labels or empty space to return to the full trend view.</p>
+    <p>Click on state labels or lines to filter by state. Click on years to highlight a specific year.</p>
+  </div>
+{/if}
 
     <div class="filter-buttons">
       <button on:click={() => {selectedRegion = "All";redraw();}}
@@ -567,7 +559,9 @@ const xAxisG = svgEl
     </div>
     
     <div class="vis-row">
-      <svg bind:this={svg} width="1200" height="800"></svg>
+    <div class="svg-wrapper">
+      <svg bind:this={svg} viewBox="0 0 1200 750" preserveAspectRatio="xMidYMid meet" style="width:100%; height:100%; display:block;"></svg>
+    </div>
       <div class="legend-container">
         {#if selectedRegion === "All"}
         {#each legendStates as region}
@@ -602,11 +596,11 @@ const xAxisG = svgEl
 
 <style>
 .vis-container {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 16px;
-  padding: 20px;
-  margin-top: 10px;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .vis-header h2 {
@@ -650,7 +644,10 @@ const xAxisG = svgEl
 
 .vis-row {
   display: flex;
+  flex-direction: row;
   align-items: flex-start;
+  flex: 1;
+  min-height: 0;
 }
 
 .legend-container {
@@ -674,5 +671,57 @@ const xAxisG = svgEl
   height: 12px;
   margin-right: 8px;
   border-radius: 2px;
+}
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.info-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #999;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
+}
+.instructions-popup {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  z-index: 20;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  max-width: 340px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #888;
+}
+.vis-header {
+  position: relative;
+}
+.svg-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.svg-wrapper svg {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

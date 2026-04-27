@@ -127,6 +127,12 @@
   let vizTransitionDirection: "forward" | "backward" = "forward";
   let vizTransitionTimer = 0;
 
+  let userMode = false;
+  let mounted = false;
+  let userModeSettled = false;
+  let userModeSettledTimer = 0;
+  let scrollLocked = false;
+
   let sectionKey: StorySection = "user";
   $: sectionKey =
   currentStep >= 1 && currentStep <= 4
@@ -272,6 +278,9 @@
     introHidden = false;
     exploding = false;
     vizTransitioning = false;
+    userModeSettled = false;
+
+    if (userModeSettledTimer) { window.clearTimeout(userModeSettledTimer); userModeSettledTimer = 0; }
 
     if (textColumnEl) {
       textColumnEl.scrollTop = 0;
@@ -391,11 +400,21 @@
     }
 
     const lastStepEl = validStepEls[validStepEls.length - 1];
-    const lastStepBottom =
-      (lastStepEl?.offsetTop ?? 0) + (lastStepEl?.offsetHeight ?? 0);
-    exploding =
-      nextStep === HANDOFF_STEP &&
-      scrollTop + viewH > lastStepBottom + STEP13_EXPLODE_OFFSET;
+const lastStepBottom = (lastStepEl?.offsetTop ?? 0) + (lastStepEl?.offsetHeight ?? 0);
+exploding =
+  nextStep === HANDOFF_STEP &&
+  scrollTop + viewH > lastStepBottom + STEP13_EXPLODE_OFFSET;
+
+if (nextStep === HANDOFF_STEP && !userMode) {
+  userMode = true;
+  userModeSettledTimer = window.setTimeout(() => {
+    userModeSettled = true;
+    const userSection = document.getElementById('user-section');
+    if (userSection) {
+      userSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, 100);
+}
   }
 
   function maybeReturnToIntro(deltaY: number) {
@@ -475,36 +494,35 @@
   }
 
   function handleUnifiedWheel(event: WheelEvent) {
-    if (currentStep === 0 || !textColumnEl) return;
-    if (!shouldUseUnifiedWheel()) return;
+  if (currentStep === 0 || !textColumnEl) return;
+  if (!shouldUseUnifiedWheel()) return;
 
-    event.preventDefault();
+  event.preventDefault();
 
-    if (maybeReturnToIntro(event.deltaY)) return;
+  if (scrollLocked) return;
+  if (Math.abs(event.deltaY) < 30) return;
 
-    let remainingDelta = event.deltaY;
+  scrollLocked = true;
+  window.setTimeout(() => { scrollLocked = false; }, 1000);
 
-    remainingDelta = scrollTextColumnTowardActiveCenter(remainingDelta);
+  if (maybeReturnToIntro(event.deltaY)) return;
 
-    if (vizScrollEl) {
-      remainingDelta = scrollElementByDelta(vizScrollEl, remainingDelta);
-    }
+  const direction = event.deltaY > 0 ? 1 : -1;
+  const targetStep = Math.min(totalSteps, Math.max(1, currentStep + direction));
+  const targetEl = stepEls[targetStep - 1];
 
-    if (currentStep === HANDOFF_STEP && exploding && remainingDelta > 0) {
-      return;
-    }
+  if (!targetEl) return;
 
-    if (remainingDelta !== 0) {
-      routeDeltaToStory(remainingDelta);
-    }
+  const previousStep = currentStep;
+  currentStep = targetStep;
+  applyStoryState(targetStep);
+  triggerVizTransition(previousStep, targetStep);
 
-    if (currentStep === 1 && event.deltaY < 0) {
-      requestAnimationFrame(() => {
-        maybeReturnToIntro(event.deltaY);
-      });
-    }
-  }
-
+  textColumnEl.scrollTo({
+    top: targetEl.offsetTop + targetEl.offsetHeight / 2 - textColumnEl.clientHeight / 2,
+    behavior: 'smooth'
+  });
+}
   function handleVizWheel(event: WheelEvent) {
     if (!vizScrollEl || !textColumnEl || currentStep === 0) return;
 
@@ -527,6 +545,7 @@
   }
 
   onMount(() => {
+    mounted = true;
     window.scrollTo(0, 0);
     let frame = 0;
 
@@ -544,8 +563,28 @@
       }
     };
 
+    const handleUserSectionScroll = () => {
+  if (userMode && userModeSettled && window.scrollY < 50) {
+    userMode = false;
+    userModeSettled = false;
+    resetToIntro();
+  }
+};
+
+    
+
     scheduleUpdate();
-    textColumnEl?.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("scroll", handleUserSectionScroll, { passive: true });
+
+    let scrollEndTimer = 0;
+textColumnEl?.addEventListener("scroll", () => {
+  if (scrollLocked) return;
+  if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
+  scrollEndTimer = window.setTimeout(() => {
+    scheduleUpdate();
+  }, 400);
+}, { passive: true });
+
     storyBodyEl?.addEventListener("wheel", handleUnifiedWheel, {
       passive: false,
     });
@@ -554,6 +593,7 @@
 
     return () => {
       clearIntroTimer();
+      window.removeEventListener("scroll", handleUserSectionScroll);
       clearVizTransitionTimer();
       if (frame) cancelAnimationFrame(frame);
       textColumnEl?.removeEventListener("scroll", scheduleUpdate);
@@ -584,11 +624,12 @@
   </section>
 
   <div
-    class="story-body"
-    class:exploding
-    class:active={currentStep > 0}
-    bind:this={storyBodyEl}
-  >
+  class="story-body"
+  class:exploding
+  class:active={currentStep > 0}
+  class:user-mode={userMode}
+  bind:this={storyBodyEl}
+>
     <div class="text-column" bind:this={textColumnEl}>
       {#if currentStep > 0}
         {@const activeStoryStep = storySteps[currentStep - 1]}
@@ -696,16 +737,11 @@
         </div>
 
       {:else if currentStep === HANDOFF_STEP}
-        <div class="viz-stage explore-stage">
-          <BumpChart storyMode={false} />
-          <USStrokeMortalityMapV2 storyMode={false} />
-          <USStrokeMortalityMap3D />
-          <DetailLinePlot storyMode={false} />
-        </div>
+      <p style="padding: 40px; color: #555; font-size: 1.1rem;">Scroll down to explore freely.</p>
       {/if}
     </div>
-  {/key}
-</div>
+    {/key}
+  </div>
 
         </div>
       </div>
@@ -714,6 +750,18 @@
 
   <div style="height: 200vh; pointer-events: none;" aria-hidden="true"></div>
 </div>
+
+{#if mounted}
+<section id="user-section" class="user-section" class:user-mode-active={userMode}>
+
+  <div class="user-section-inner">
+    <BumpChart storyMode={false} />
+    <USStrokeMortalityMapV2 storyMode={false} />
+    <USStrokeMortalityMap3D />
+    <DetailLinePlot storyMode={false} />
+  </div>
+</section>
+{/if}
 
 <style>
   .story-page {
@@ -1144,9 +1192,10 @@
     height: 100%;
     padding: 0px 18px;
     box-sizing: border-box;
-    overflow: auto;
+    overflow: hidden; /*APR 26*/
     overscroll-behavior-y: contain;
     z-index: 1;
+    display: flex; flex-direction: column;/*APR 26*/
   }
 
   .viz-header {
@@ -1211,7 +1260,7 @@
   }
 
   .viz-stage {
-    min-height: calc(100% - 72px);
+    flex: 1; min-height: 0; display: flex; flex-direction: column; /*APR 26*/
     position: relative;
     z-index: 1;
   }
@@ -1225,6 +1274,7 @@
       transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
       filter 360ms ease;
     will-change: opacity, transform, filter;
+    flex: 1; min-height: 0; display: flex; flex-direction: column; /*APR 26*/
   }
 
   .viz-step-transitioning {
@@ -1242,6 +1292,7 @@
 
   .chart-shell {
     position: relative;
+    flex: 1; min-height: 0; display: flex; flex-direction: column; /*APR 26*/
   }
 
   .explore-stage {
@@ -1311,6 +1362,7 @@
     .viz-scroll {
       height: auto;
       overflow: visible;
+      display: block; /*APR 26*/
     }
 
     .viz-header {
@@ -1326,4 +1378,27 @@
       padding: 36px 24px;
     }
   }
+    .user-section {
+      min-height: 100vh;
+      padding: 40px 32px;
+      box-sizing: border-box;
+      background: #f8fafc;
+      display: none;
+    }
+    .user-section.user-mode-active {
+      display: block;
+    }
+    .user-section-inner {
+      display: grid;
+      gap: 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .story-body.user-mode {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+  
 </style>
