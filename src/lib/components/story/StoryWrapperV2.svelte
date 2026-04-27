@@ -518,6 +518,16 @@ if (nextStep === HANDOFF_STEP && !userMode) {
   applyStoryState(targetStep);
   triggerVizTransition(previousStep, targetStep);
 
+  if (targetStep === HANDOFF_STEP && !userMode) {
+    userMode = true;
+    userModeSettledTimer = window.setTimeout(() => {
+      userModeSettled = true;
+      const userSection = document.getElementById('user-section');
+      if (userSection) userSection.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+    return;
+  }
+
   textColumnEl.scrollTo({
     top: targetEl.offsetTop + targetEl.offsetHeight / 2 - textColumnEl.clientHeight / 2,
     behavior: 'smooth'
