@@ -493,8 +493,8 @@
       },
       6: {
         label: "Time signal",
-        value: "The nation improves, but the map keeps its shape",
-        detail: "Lighter colors suggest broad improvement even while persistent hotspots remain visible.",
+        value: "The U.S. map gets lighter, but the regional pattern holds",
+        detail: "Across states, mortality generally declines over time, yet the same high-burden regions still stand out.",
       },
       7: {
         label: "Comparison",
@@ -575,7 +575,7 @@
       },
       6: {
         height: 90,
-        text: "By the end of the animation, the country is lighter than it was in 1999. The important question becomes: even after improvement, which places still stand out?",
+        text: "By the end of the animation, much of the U.S. map is lighter than it was in 1999. The important question becomes: even after overall improvement, which states or regions still stand out?",
       },
       7: {
         height: 78,
