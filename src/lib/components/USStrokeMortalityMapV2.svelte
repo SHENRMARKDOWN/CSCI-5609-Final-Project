@@ -137,6 +137,12 @@
   function doClick(code: string) {
     selectedState.update((c) => (c === code ? null : code));
   }
+  function handleStateKeydown(event: KeyboardEvent, code: string | undefined) {
+    if (!code) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    doClick(code);
+  }
   function arcPath(cx: number, cy: number, r: number, pct: number): string {
     if (pct <= 0) return "";
 
@@ -386,12 +392,12 @@
       Year selected in Visualization 1: {$selectedYear}
     {/if}
   </p>
-  <button class="info-btn" on:click={() => showInstructions = !showInstructions}>ℹ</button>
+  <button class="info-btn" onclick={() => showInstructions = !showInstructions}>ℹ</button>
 </div>
 
 {#if showInstructions}
   <div class="instructions-popup">
-    <button class="close-btn" on:click={() => showInstructions = false}>✕</button>
+    <button class="close-btn" onclick={() => showInstructions = false}>✕</button>
     <p>Each state in the selector box is shown as a glyph: fill color = mortality rate, outer ring = national percentile.</p>
     <p>Drag the blue selector box to explore any region. States inside are shown with glyph detail.</p>
     <p>Click any state to highlight it.</p>
@@ -425,18 +431,23 @@
               stroke="#fff"
               stroke-width={isSel ? 2.5 : 0.8}
               opacity={dim ? 0.5 : 1}
+              role="button"
+              tabindex="0"
+              aria-label={code ? `Select ${C2S[code] ?? code}` : "Select state"}
               style="cursor:pointer;"
-              on:mouseenter={(e) =>
+              onmouseenter={(e) =>
                 code && showTip(e, code, mort, percentileMap.get(code) ?? null)}
-              on:mousemove={(e) =>
+              onmousemove={(e) =>
                 code && showTip(e, code, mort, percentileMap.get(code) ?? null)}
-              on:mouseleave={clearTip}
-              on:click={() => code && doClick(code)}
+              onmouseleave={clearTip}
+              onclick={() => code && doClick(code)}
+              onkeydown={(e) => handleStateKeydown(e, code)}
             />
           {/each}
         </g>
 
         <!-- Selection box -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <rect
           x={$boxX}
           y={$boxY}
@@ -447,13 +458,16 @@
           stroke-width="2"
           stroke-dasharray="8,4"
           rx="6"
+          aria-hidden="true"
           style="cursor:grab;"
-          on:mousedown={startMove}
+          onmousedown={startMove}
         />
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <g
           transform="translate({$boxX + boxW - 16},{$boxY + boxH - 16})"
+          aria-hidden="true"
           style="cursor:nwse-resize;"
-          on:mousedown={startResize}
+          onmousedown={startResize}
         >
           <rect width="18" height="18" fill="rgba(61,90,128,0.12)" rx="3" />
           <text x="4" y="14" font-size="12" fill="#3d5a80">◢</text>
@@ -522,12 +536,16 @@
               {@const dark = mort !== null && mort > (minM + maxM) * 0.55}
               <g
                 class="tile"
+                role="button"
+                tabindex="0"
+                aria-label={`Highlight ${C2S[st.code] ?? st.code}`}
                 style="cursor:pointer;"
                 opacity={dim ? 0.4 : 1}
-                on:mouseenter={(e) => showTip(e, st.code, mort, pct)}
-                on:mousemove={(e) => showTip(e, st.code, mort, pct)}
-                on:mouseleave={clearTip}
-                on:click={() => doClick(st.code)}
+                onmouseenter={(e) => showTip(e, st.code, mort, pct)}
+                onmousemove={(e) => showTip(e, st.code, mort, pct)}
+                onmouseleave={clearTip}
+                onclick={() => doClick(st.code)}
+                onkeydown={(e) => handleStateKeydown(e, st.code)}
               >
                 <rect
                   x={tx}
@@ -713,18 +731,19 @@
 
 
 <style>
-  .map-shell {
+.map-shell {
   height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding-top: 8px;
+  color: var(--story-text, #241419);
 }
 
   .map-caption {
     margin: 0;
-    color: #555;
+    color: var(--story-muted, #6f5960);
     font-size: 0.95rem;
   }
   .map-container {
@@ -732,21 +751,21 @@
   flex: 1;
   min-height: 0;
   max-height: 80%;
-  border: 1px solid #d9d9d9;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid var(--story-border, #e8d2cb);
+  border-radius: 18px;
+  background: #fffdfb;
   overflow: hidden;
 }
 
 
   .glyph-legend {
     padding: 12px 20px 14px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--story-border, #e8d2cb);
   }
   .legend-title {
     font-size: 12px;
     font-weight: 600;
-    color: #444;
+    color: var(--story-text, #241419);
     margin-bottom: 6px;
   }
   .legend-content {
@@ -756,7 +775,7 @@
   }
   .legend-labels {
     font-size: 11px;
-    color: #555;
+    color: var(--story-muted, #6f5960);
     line-height: 1.6;
   }
   .swatch {
@@ -787,11 +806,11 @@
     pointer-events: none;
     min-width: 150px;
     padding: 0.65rem 0.8rem;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.97);
-    color: #333;
-    border: 1px solid #d5d5d5;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 253, 251, 0.97);
+    color: var(--story-text, #241419);
+    border: 1px solid var(--story-border, #e8d2cb);
+    box-shadow: 0 10px 24px rgba(53, 18, 22, 0.12);
     font-size: 0.92rem;
     line-height: 1.4;
     transform: translateY(-100%);
@@ -811,8 +830,9 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1.5px solid #999;
-  background: #f5f5f5;
+  border: 1px solid var(--story-border-strong, #cc5368);
+  background: #fff8f6;
+  color: var(--story-accent-strong, #8e0f27);
   cursor: pointer;
   font-size: 14px;
   flex-shrink: 0;
@@ -823,14 +843,15 @@
   top: 36px;
   right: 0;
   z-index: 20;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
+  background: #fffdfb;
+  border: 1px solid var(--story-border, #e8d2cb);
+  border-radius: 16px;
   padding: 16px 18px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 14px 32px rgba(61, 20, 24, 0.14);
   max-width: 320px;
   font-size: 0.88rem;
   line-height: 1.6;
+  color: var(--story-muted, #6f5960);
 }
 
 .instructions-popup p { margin: 0 0 8px 0; }
@@ -843,6 +864,6 @@
   border: none;
   cursor: pointer;
   font-size: 13px;
-  color: #888;
+  color: var(--story-accent-strong, #8e0f27);
 }
 </style>

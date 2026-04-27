@@ -28,6 +28,27 @@
       caption: string;
     };
   };
+  type StoryFinding = {
+    label: string;
+    value: string;
+    detail: string;
+  };
+  type ThemeStop = {
+    step: number;
+    accent: string;
+    accentStrong: string;
+    accentSoft: string;
+    bgTop: string;
+    bgBottom: string;
+    orbA: string;
+    orbB: string;
+    panel: string;
+    panelStrong: string;
+    border: string;
+    borderStrong: string;
+    text: string;
+    muted: string;
+  };
 
   const storySteps: StoryStep[] = [
     {
@@ -170,6 +191,107 @@
     },
   ];
 
+  const introHighlights = [
+    {
+      label: "Regional signal",
+      value: "Southeast stays highest",
+      caption: "The national rank view repeatedly clusters the heaviest burden in the Southeast.",
+    },
+    {
+      label: "Story anchor",
+      value: "Mississippi remains central",
+      caption: "One high-burden state carries the audience from overview into geographic and subgroup detail.",
+    },
+    {
+      label: "Subgroup gap",
+      value: "Disparities persist within states",
+      caption: "The state average hides meaningful differences by sex, race, and county.",
+    },
+  ];
+
+  const themeStops: ThemeStop[] = [
+    {
+      step: 0,
+      accent: "#cc5368",
+      accentStrong: "#8e0f27",
+      accentSoft: "#f6ddd8",
+      bgTop: "#23030b",
+      bgBottom: "#651826",
+      orbA: "#cf4c5f",
+      orbB: "#f2a17f",
+      panel: "#fff5f2",
+      panelStrong: "#fffaf7",
+      border: "#eac5bd",
+      borderStrong: "#cc5368",
+      text: "#241419",
+      muted: "#72515a",
+    },
+    {
+      step: 4,
+      accent: "#d45a58",
+      accentStrong: "#94161f",
+      accentSoft: "#f7dfd6",
+      bgTop: "#420810",
+      bgBottom: "#8b2430",
+      orbA: "#dc695e",
+      orbB: "#efbf8f",
+      panel: "#fff6f2",
+      panelStrong: "#fffaf7",
+      border: "#edcec5",
+      borderStrong: "#d45a58",
+      text: "#261518",
+      muted: "#775356",
+    },
+    {
+      step: 7,
+      accent: "#d96d4c",
+      accentStrong: "#a12622",
+      accentSoft: "#f9e4d8",
+      bgTop: "#62161d",
+      bgBottom: "#bf554e",
+      orbA: "#e3865d",
+      orbB: "#f0c89d",
+      panel: "#fff7f3",
+      panelStrong: "#fffaf8",
+      border: "#edd2c7",
+      borderStrong: "#d96d4c",
+      text: "#291617",
+      muted: "#7a5a58",
+    },
+    {
+      step: 11,
+      accent: "#c95d72",
+      accentStrong: "#9d2442",
+      accentSoft: "#f8e4e3",
+      bgTop: "#8e3036",
+      bgBottom: "#efb0a2",
+      orbA: "#d77d89",
+      orbB: "#f3d0af",
+      panel: "#fff9f6",
+      panelStrong: "#fffdfb",
+      border: "#ecd4ce",
+      borderStrong: "#c95d72",
+      text: "#2b181c",
+      muted: "#7b5f63",
+    },
+    {
+      step: 14,
+      accent: "#b94962",
+      accentStrong: "#92213d",
+      accentSoft: "#f8e8e5",
+      bgTop: "#f4cbc6",
+      bgBottom: "#fff1ed",
+      orbA: "#d78a93",
+      orbB: "#f5d8ba",
+      panel: "#fffaf8",
+      panelStrong: "#fffefe",
+      border: "#e8d6d2",
+      borderStrong: "#b94962",
+      text: "#2a1b20",
+      muted: "#725d62",
+    },
+  ];
+
   const totalSteps = storySteps.length;
   const vis3StartStep = 8;
 
@@ -262,6 +384,171 @@
     if (step >= 5 && step <= 7) return "theme-vis2";
     if (step >= vis3StartStep && step <= 13) return "theme-vis3";
     return "theme-user";
+  }
+
+  function hexToRgb(hex: string) {
+    const normalized = hex.replace("#", "");
+    const safeHex =
+      normalized.length === 3
+        ? normalized
+            .split("")
+            .map((char) => `${char}${char}`)
+            .join("")
+        : normalized;
+
+    const value = Number.parseInt(safeHex, 16);
+
+    return {
+      r: (value >> 16) & 255,
+      g: (value >> 8) & 255,
+      b: value & 255,
+    };
+  }
+
+  function rgbToHex({ r, g, b }: { r: number; g: number; b: number }) {
+    return `#${[r, g, b]
+      .map((channel) =>
+        Math.round(channel).toString(16).padStart(2, "0")
+      )
+      .join("")}`;
+  }
+
+  function mixColor(a: string, b: string, t: number) {
+    const start = hexToRgb(a);
+    const end = hexToRgb(b);
+
+    return rgbToHex({
+      r: start.r + (end.r - start.r) * t,
+      g: start.g + (end.g - start.g) * t,
+      b: start.b + (end.b - start.b) * t,
+    });
+  }
+
+  function interpolateTheme(step: number, progress: number) {
+    const position = clamp(step + progress, 0, HANDOFF_STEP);
+    const nextIndex = themeStops.findIndex((stop) => stop.step >= position);
+
+    if (nextIndex <= 0) return themeStops[0];
+    if (nextIndex === -1) return themeStops[themeStops.length - 1];
+
+    const previous = themeStops[nextIndex - 1];
+    const next = themeStops[nextIndex];
+    const range = Math.max(1, next.step - previous.step);
+    const t = clamp((position - previous.step) / range);
+
+    return {
+      step: position,
+      accent: mixColor(previous.accent, next.accent, t),
+      accentStrong: mixColor(previous.accentStrong, next.accentStrong, t),
+      accentSoft: mixColor(previous.accentSoft, next.accentSoft, t),
+      bgTop: mixColor(previous.bgTop, next.bgTop, t),
+      bgBottom: mixColor(previous.bgBottom, next.bgBottom, t),
+      orbA: mixColor(previous.orbA, next.orbA, t),
+      orbB: mixColor(previous.orbB, next.orbB, t),
+      panel: mixColor(previous.panel, next.panel, t),
+      panelStrong: mixColor(previous.panelStrong, next.panelStrong, t),
+      border: mixColor(previous.border, next.border, t),
+      borderStrong: mixColor(previous.borderStrong, next.borderStrong, t),
+      text: mixColor(previous.text, next.text, t),
+      muted: mixColor(previous.muted, next.muted, t),
+    };
+  }
+
+  function getThemeStyle(step: number, progress: number) {
+    const theme = interpolateTheme(step, progress);
+
+    return [
+      `--story-accent: ${theme.accent}`,
+      `--story-accent-strong: ${theme.accentStrong}`,
+      `--story-accent-soft: ${theme.accentSoft}`,
+      `--story-bg-top: ${theme.bgTop}`,
+      `--story-bg-bottom: ${theme.bgBottom}`,
+      `--story-orb-a: ${theme.orbA}`,
+      `--story-orb-b: ${theme.orbB}`,
+      `--story-panel: ${theme.panel}`,
+      `--story-panel-strong: ${theme.panelStrong}`,
+      `--story-border: ${theme.border}`,
+      `--story-border-strong: ${theme.borderStrong}`,
+      `--story-text: ${theme.text}`,
+      `--story-muted: ${theme.muted}`,
+    ].join("; ");
+  }
+
+  function getFinding(step: number): StoryFinding | null {
+    const findings: Record<number, StoryFinding> = {
+      1: {
+        label: "Key finding",
+        value: "2019 mortality is not evenly distributed",
+        detail: "High-burden states already cluster before the story introduces time or interaction.",
+      },
+      2: {
+        label: "Pattern",
+        value: "The Southeast stays near the top",
+        detail: "The rank trajectories move, but the regional structure remains remarkably stable.",
+      },
+      4: {
+        label: "Anchor",
+        value: "Mississippi becomes the narrative guide",
+        detail: "A single state now links rank, geography, and subgroup detail into one readable story.",
+      },
+      6: {
+        label: "Time signal",
+        value: "The nation improves, but the map keeps its shape",
+        detail: "Lighter colors suggest broad improvement even while persistent hotspots remain visible.",
+      },
+      7: {
+        label: "Comparison",
+        value: "National decline and local persistence coexist",
+        detail: "The brush view makes it easier to compare Mississippi against the U.S. average over time.",
+      },
+      8: {
+        label: "Baseline",
+        value: "State averages hide subgroup variation",
+        detail: "The single Mississippi line works best as a reference, not the end of the story.",
+      },
+      9: {
+        label: "Subgroup",
+        value: "Men tend to sit above women in 35-64",
+        detail: "The staged reveal makes the sex gap readable without overwhelming the panel.",
+      },
+      11: {
+        label: "Disparity",
+        value: "Black adults remain visibly above other race groups",
+        detail: "The strongest subgroup gap in Mississippi persists across the time series.",
+      },
+      13: {
+        label: "Local detail",
+        value: "County stories diverge around the state average",
+        detail: "Suggested counties reveal which places consistently sit above Mississippi's baseline.",
+      },
+      14: {
+        label: "Next step",
+        value: "Test whether the story holds elsewhere",
+        detail: "The guided path ends here; free exploration should validate or challenge the chosen narrative.",
+      },
+    };
+
+    return findings[step] ?? null;
+  }
+
+  function getInteractionChips(step: number) {
+    if (step >= 1 && step <= 4) {
+      return ["Click year labels", "Select a state line", "Filter by region"];
+    }
+
+    if (step >= 5 && step <= 6) {
+      return ["Drag the selection box", "Click any state", "Read the glyph panel"];
+    }
+
+    if (step === 7) {
+      return ["Drag to rotate", "Click a state", "Brush a year window"];
+    }
+
+    if (step >= 8 && step <= 13) {
+      return ["Switch subgroup mode", "Hover lines to focus", "Add suggested counties"];
+    }
+
+    return ["Change state", "Change year", "Compare subgroups"];
   }
 
   function getBridge(step: number) {
@@ -677,260 +964,314 @@
   });
 </script>
 
-<div class={`story-page ${getThemeClass(currentStep)}`}>
-  <section class="intro-section" class:hidden={introHidden} data-step="0">
-    <div class="intro-box">
-      <p class="eyebrow" in:fade={{ duration: 420, delay: 80 }}>
-        Author-Driven Story
-      </p>
-      <h1 class="intro-title" in:fly={{ y: 22, duration: 620, delay: 120 }}>
-        Stroke Mortality in the U.S.
-      </h1>
-      <p class="intro-copy" in:fade={{ duration: 520, delay: 260 }}>
-        This version uses scroll to reveal one guided narrative arc: national
-        rank, geographic context, then Mississippi subgroup detail.
-      </p>
-      <p class="hint" in:fade={{ duration: 520, delay: 420 }}>
-        Scroll down to start the guided story
-      </p>
-    </div>
-  </section>
+<div class="story-shell" style={getThemeStyle(currentStep, stepProgress)}>
+  <div class={`story-page ${getThemeClass(currentStep)}`}>
+    <section class="intro-section" class:hidden={introHidden} data-step="0">
+      <div class="intro-box">
+        <p class="eyebrow" in:fade={{ duration: 420, delay: 80 }}>
+          Author-Driven Story
+        </p>
+        <h1 class="intro-title" in:fly={{ y: 22, duration: 620, delay: 120 }}>
+          Stroke Mortality in the U.S.
+        </h1>
+        <p class="intro-copy" in:fade={{ duration: 520, delay: 260 }}>
+          This version follows one editorial arc: a national burden map, a
+          Mississippi case study, and a gradual reveal of disparities hidden
+          inside the state average.
+        </p>
 
-  <div
-  class="story-body"
-  class:exploding
-  class:active={currentStep > 0}
-  class:user-mode={userMode}
-  bind:this={storyBodyEl}
->
-    <div class="text-column" bind:this={textColumnEl}>
-      {#each storySteps as item, i}
-        {@const bridge = getBridge(item.step)}
-        <div
-          class="step"
-          data-step={item.step}
-          bind:this={stepEls[i]}
-          style={`--step-min-height: ${getStepMinHeight(item.step)}vh;`}
-        >
-          <div
-            class="step-card step-card-scroll"
-            class:active={currentStep === item.step}
-            class:past={currentStep > item.step}
-          >
-            <div class="step-index">{item.step}</div>
-            <p class="section-tag">{item.section.toUpperCase()}</p>
-            <h2 class="step-title">{item.title}</h2>
-            <p class="step-copy">{@html item.text}</p>
-
-            {#if item.highlight}
-              <div class="key-highlight">
-                <p class="highlight-label">{item.highlight.label}</p>
-                <p class="highlight-value">{item.highlight.value}</p>
-                <p class="highlight-caption">{item.highlight.caption}</p>
-              </div>
-            {/if}
-
-            {#if item.prompt}
-              <p class="interaction-prompt">{item.prompt}</p>
-            {/if}
-          </div>
+        <div class="intro-highlight-grid" in:fade={{ duration: 520, delay: 340 }}>
+          {#each introHighlights as item}
+            <article class="intro-highlight-card">
+              <p class="intro-highlight-label">{item.label}</p>
+              <h2 class="intro-highlight-value">{item.value}</h2>
+              <p class="intro-highlight-caption">{item.caption}</p>
+            </article>
+          {/each}
         </div>
 
-        {#if bridge}
+        <p class="hint" in:fade={{ duration: 520, delay: 420 }}>
+          Scroll down to start the guided story
+        </p>
+      </div>
+    </section>
+
+    <div
+      class="story-body"
+      class:exploding
+      class:active={currentStep > 0}
+      class:user-mode={userMode}
+      bind:this={storyBodyEl}
+    >
+      <div class="text-column" bind:this={textColumnEl}>
+        {#each storySteps as item, i}
+          {@const bridge = getBridge(item.step)}
           <div
-            class="step-bridge"
-            style={`--bridge-height: ${bridge.height}vh;`}
+            class="step"
+            data-step={item.step}
+            bind:this={stepEls[i]}
+            style={`--step-min-height: ${getStepMinHeight(item.step)}vh;`}
           >
-            <p class="bridge-label">Transition</p>
-            <p class="bridge-text">{@html bridge.text}</p>
-          </div>
-        {/if}
-      {/each}
+            <div
+              class="step-card step-card-scroll"
+              class:active={currentStep === item.step}
+              class:past={currentStep > item.step}
+            >
+              <div class="step-index">{item.step}</div>
+              <p class="section-tag">{item.section.toUpperCase()}</p>
+              <h2 class="step-title">{item.title}</h2>
+              <p class="step-copy">{@html item.text}</p>
 
-      <div style="height: 60vh;"></div>
-    </div>
+              {#if item.highlight}
+                <div class="key-highlight">
+                  <p class="highlight-label">{item.highlight.label}</p>
+                  <p class="highlight-value">{item.highlight.value}</p>
+                  <p class="highlight-caption">{item.highlight.caption}</p>
+                </div>
+              {/if}
 
-    <div class="viz-panel">
-      <div class="viz-box">
-        <div class="panel-glow" aria-hidden="true"></div>
-        <div class="viz-scroll" bind:this={vizScrollEl}>
-          <div class="viz-header">
-            <div class="viz-header-content">
-              <div class="viz-title-block">
-                <p class="viz-tag">{getVizMeta(currentStep).tag}</p>
-                <h3>{getVizMeta(currentStep).title}</h3>
-              </div>
-              <div class="viz-meta">
-                <p class="viz-progress">Step {currentStep} / {totalSteps}</p>
-                <p class="viz-subtitle">{getVizMeta(currentStep).subtitle}</p>
-              </div>
+              {#if item.prompt}
+                <p class="interaction-prompt">{item.prompt}</p>
+              {/if}
             </div>
           </div>
 
-<div
-  class="viz-transition-layer"
-  class:viz-step-transitioning={vizTransitioning}
-  class:transition-forward={vizTransitionDirection === "forward"}
-  class:transition-backward={vizTransitionDirection === "backward"}
->
-  {#key getVizComponentKey(currentStep)}
-    <div class="viz-stage">
-      {#if currentStep >= 1 && currentStep <= 4}
-        <div class="chart-shell">
-          <BumpChart
-            storyStep={currentStep}
-            storyMode={true}
-            storyProgress={stepProgress}
-          />
-        </div>
-      {:else if currentStep >= 5 && currentStep <= 6}
-        <div class="chart-shell">
-          <USStrokeMortalityMapV2
-            storyStep={currentStep}
-            storyMode={true}
-            storyProgress={stepProgress}
-          />
-        </div>
+          {#if bridge}
+            <div
+              class="step-bridge"
+              style={`--bridge-height: ${bridge.height}vh;`}
+            >
+              <p class="bridge-label">Transition</p>
+              <p class="bridge-text">{@html bridge.text}</p>
+            </div>
+          {/if}
+        {/each}
 
-      {:else if currentStep === 7}
-        <div class="chart-shell">
-          <USStrokeMortalityMap3D
-            storyMode={true}
-            showYearSlider={false}
-            storyProgress={stepProgress}
-          />
-        </div>
+        <div style="height: 60vh;"></div>
+      </div>
 
-      {:else if currentStep >= 8 && currentStep <= 13}
-        <div class="chart-shell">
-          <DetailLinePlot
-            storyStep={currentStep}
-            storyMode={true}
-            storyProgress={stepProgress}
-          />
-        </div>
+      <div class="viz-panel">
+        <div class="viz-box">
+          <div class="panel-glow" aria-hidden="true"></div>
+          <div class="viz-scroll" bind:this={vizScrollEl}>
+            <div class="viz-header">
+              <div class="viz-header-content">
+                <div class="viz-title-block">
+                  <p class="viz-tag">{getVizMeta(currentStep).tag}</p>
+                  <h3>{getVizMeta(currentStep).title}</h3>
+                </div>
+                <div class="viz-meta">
+                  <p class="viz-progress">Step {currentStep} / {totalSteps}</p>
+                  <p class="viz-subtitle">{getVizMeta(currentStep).subtitle}</p>
+                </div>
+              </div>
 
-      {:else if currentStep === HANDOFF_STEP}
-      <p style="padding: 40px; color: #555; font-size: 1.1rem;">Scroll down to explore freely.</p>
-      {/if}
-    </div>
-    {/key}
-  </div>
+              {#if getFinding(currentStep)}
+                {@const finding = getFinding(currentStep) ?? {
+                  label: "",
+                  value: "",
+                  detail: "",
+                }}
+                <div class="viz-finding-card">
+                  <p class="viz-finding-label">{finding.label}</p>
+                  <p class="viz-finding-value">{finding.value}</p>
+                  <p class="viz-finding-detail">{finding.detail}</p>
+                </div>
+              {/if}
 
+              <div class="viz-action-row">
+                {#each getInteractionChips(currentStep) as chip}
+                  <span class="viz-action-chip">{chip}</span>
+                {/each}
+              </div>
+            </div>
+
+            <div
+              class="viz-transition-layer"
+              class:viz-step-transitioning={vizTransitioning}
+              class:transition-forward={vizTransitionDirection === "forward"}
+              class:transition-backward={vizTransitionDirection === "backward"}
+            >
+              {#key getVizComponentKey(currentStep)}
+                <div class="viz-stage">
+                  {#if currentStep >= 1 && currentStep <= 4}
+                    <div class="chart-shell">
+                      <BumpChart
+                        storyStep={currentStep}
+                        storyMode={true}
+                        storyProgress={stepProgress}
+                      />
+                    </div>
+                  {:else if currentStep >= 5 && currentStep <= 6}
+                    <div class="chart-shell">
+                      <USStrokeMortalityMapV2
+                        storyStep={currentStep}
+                        storyMode={true}
+                        storyProgress={stepProgress}
+                      />
+                    </div>
+                  {:else if currentStep === 7}
+                    <div class="chart-shell">
+                      <USStrokeMortalityMap3D
+                        storyMode={true}
+                        showYearSlider={false}
+                        storyProgress={stepProgress}
+                      />
+                    </div>
+                  {:else if currentStep >= 8 && currentStep <= 13}
+                    <div class="chart-shell">
+                      <DetailLinePlot
+                        storyStep={currentStep}
+                        storyMode={true}
+                        storyProgress={stepProgress}
+                      />
+                    </div>
+                  {:else if currentStep === HANDOFF_STEP}
+                    <div class="handoff-card">
+                      <p class="handoff-label">Free Exploration</p>
+                      <h4>Scroll down to continue with the full dashboard.</h4>
+                      <p>
+                        The story keeps the same views, but removes the guided
+                        path so you can test other states and years yourself.
+                      </p>
+                    </div>
+                  {/if}
+                </div>
+              {/key}
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <div style="height: 200vh; pointer-events: none;" aria-hidden="true"></div>
   </div>
 
-  <div style="height: 200vh; pointer-events: none;" aria-hidden="true"></div>
+  {#if mounted && userMode}
+    <section id="user-section" class="user-section">
+      <div class="user-section-inner">
+        <div class="user-mode-hero">
+          <p class="eyebrow">User-Driven Mode</p>
+          <h2>Explore Beyond the Guided Mississippi Story</h2>
+          <p>
+            Change state, year, region, and subgroup controls to see whether
+            the same patterns hold elsewhere or break in interesting ways.
+          </p>
+          <div class="user-mode-chips">
+            <span>test another state</span>
+            <span>compare years</span>
+            <span>inspect subgroup gaps</span>
+          </div>
+        </div>
 
+        <BumpChart storyMode={false} />
+        <USStrokeMortalityMapV2 storyMode={false} />
+        <USStrokeMortalityMap3D storyMode={false} />
+        <DetailLinePlot storyMode={false} />
+      </div>
+    </section>
 
-
-  
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-block">
+          <h4>Data Sources</h4>
+          <ul>
+            <li>
+              <a href="https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021" target="_blank">
+                CDC Stroke Mortality Data Among US Adults (35+) by State/Territory and County
+              </a>
+            </li>
+            <li>
+              <a href="https://www.who.int/news-room/fact-sheets/detail/stroke" target="_blank">
+                WHO — Stroke
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="footer-block">
+          <h4>Contributors</h4>
+          <ul>
+            <li>Lechen Shen</li>
+            <li>Songlin Shang</li>
+            <li>Ruixing Lu</li>
+            <li>Jacob Sun</li>
+            <li>Chenzhi Zhao</li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+  {/if}
 </div>
 
-{#if mounted && userMode}
-  <section id="user-section" class="user-section">
-    <div class="user-section-inner">
-      <BumpChart storyMode={false} />
-      <USStrokeMortalityMapV2 storyMode={false} />
-      <USStrokeMortalityMap3D storyMode={false} />
-      <DetailLinePlot storyMode={false} />
-    </div>
-  </section>
-
-  <!-- Footer only visible in user-driven mode -->
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-block">
-        <h4>Data Sources</h4>
-        <ul>
-          <li>
-            <a href="https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021" target="_blank">
-              CDC Stroke Mortality Data Among US Adults (35+) by State/Territory and County
-            </a>
-          </li>
-          <li>
-            <a href="https://www.who.int/news-room/fact-sheets/detail/stroke" target="_blank">
-              WHO — Stroke
-            </a>
-          </li>
-        </ul>
-      </div>
-      <div class="footer-block">
-        <h4>Contributors</h4>
-        <ul>
-          <li>Lechen Shen</li>
-          <li>Songlin Shang</li>
-          <li>Ruixing Lu</li>
-          <li>Jacob Sun</li>
-          <li>Chenzhi Zhao</li>
-        </ul>
-      </div>
-    </div>
-  </footer>
-{/if}
-
 <style>
+  .story-shell {
+    position: relative;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top center, var(--story-bg-bottom), transparent 58%),
+      linear-gradient(180deg, var(--story-bg-top) 0%, var(--story-bg-bottom) 52%, #fff4ef 100%);
+    color: var(--story-text);
+    overflow-x: clip;
+    transition:
+      background 480ms ease,
+      color 240ms ease;
+  }
+
+  .story-shell::before,
+  .story-shell::after {
+    content: "";
+    position: fixed;
+    inset: auto;
+    border-radius: 999px;
+    filter: blur(24px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.9;
+  }
+
+  .story-shell::before {
+    top: 6%;
+    right: -4%;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, var(--story-orb-a) 0%, transparent 68%);
+    animation: arterialDrift 18s ease-in-out infinite alternate;
+  }
+
+  .story-shell::after {
+    bottom: 4%;
+    left: -5%;
+    width: 460px;
+    height: 460px;
+    background: radial-gradient(circle, var(--story-orb-b) 0%, transparent 70%);
+    animation: pulseBloom 15s ease-in-out infinite;
+  }
+
   .story-page {
     width: 100%;
     min-height: 100vh;
     position: relative;
-    background:
-      radial-gradient(
-        circle at top left,
-        rgba(30, 64, 175, 0.08),
-        transparent 30%
-      ),
-      linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-    color: #111827;
-    transition:
-      background 420ms ease,
-      color 260ms ease;
   }
 
-  .story-page::before {
-    content: "";
-    position: fixed;
-    top: 10%;
-    right: 5%;
-    width: 360px;
-    height: 360px;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      rgba(59, 130, 246, 0.16),
-      transparent 68%
-    );
-    filter: blur(18px);
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.85;
-    transition: background 420ms ease;
+  @keyframes arterialDrift {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    100% {
+      transform: translate3d(-36px, 28px, 0) scale(1.12);
+    }
   }
 
-  .story-page.theme-vis2::before {
-    background: radial-gradient(
-      circle,
-      rgba(245, 158, 11, 0.18),
-      transparent 68%
-    );
-  }
-
-  .story-page.theme-vis3::before {
-    background: radial-gradient(
-      circle,
-      rgba(16, 185, 129, 0.16),
-      transparent 68%
-    );
-  }
-
-  .story-page.theme-user::before {
-    background: radial-gradient(
-      circle,
-      rgba(99, 102, 241, 0.14),
-      transparent 68%
-    );
+  @keyframes pulseBloom {
+    0%,
+    100% {
+      transform: scale(0.94);
+      opacity: 0.7;
+    }
+    50% {
+      transform: scale(1.08);
+      opacity: 0.95;
+    }
   }
 
   .intro-section {
@@ -953,34 +1294,39 @@
 
   .intro-box {
     text-align: center;
-    max-width: 920px;
-    padding: 48px 40px;
-    border-radius: 28px;
-    background: rgba(255, 255, 255, 0.84);
-    box-shadow: 0 26px 60px rgba(15, 23, 42, 0.09);
-    backdrop-filter: blur(10px);
+    max-width: 1080px;
+    padding: 50px 44px;
+    border-radius: 32px;
+    background:
+      linear-gradient(160deg, var(--story-panel-strong), var(--story-panel));
+    border: 1px solid var(--story-border);
+    box-shadow:
+      0 28px 70px rgba(41, 16, 20, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(14px);
   }
 
   .eyebrow {
     margin: 0 0 14px 0;
-    color: #1d4ed8;
-    font-size: 0.85rem;
+    color: var(--story-accent-strong);
+    font-size: 0.78rem;
     font-weight: 800;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
   }
 
   .intro-box h1 {
     margin: 0 0 18px 0;
-    font-size: clamp(2.6rem, 5vw, 4.25rem);
-    line-height: 0.98;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    line-height: 0.94;
     font-weight: 800;
+    color: var(--story-text);
   }
 
   .intro-box p {
-    font-size: 1.15rem;
-    line-height: 1.7;
-    color: #374151;
+    font-size: 1.08rem;
+    line-height: 1.72;
+    color: var(--story-muted);
   }
 
   .intro-title {
@@ -993,34 +1339,62 @@
     margin-right: auto;
   }
 
-  .hint {
-    margin-top: 22px;
-    color: #1d4ed8;
-    font-weight: 700;
+  .intro-highlight-grid {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    text-align: left;
   }
-  :global(.who-link) {
-  color: #2563eb;
-  font-weight: 800;
-  text-decoration: none;
-  background-color: #dbeafe;
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-:global(.dataset-link) {
-  color: #2563eb;
-  font-weight: 800;
-  text-decoration: none;
-  background-color: #dbeafe;
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-:global(.hl) {
-  color: #2563eb;
-  font-weight: 800;
-  text-decoration: none;
-  padding: 1px 4px;
-  border-radius: 3px;
-}
+
+  .intro-highlight-card {
+    padding: 18px 18px 16px;
+    border-radius: 20px;
+    background:
+      linear-gradient(145deg, #ffffff, var(--story-panel));
+    border: 1px solid var(--story-border);
+    box-shadow: 0 12px 28px rgba(73, 24, 29, 0.09);
+  }
+
+  .intro-highlight-label {
+    margin: 0 0 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--story-accent-strong);
+  }
+
+  .intro-highlight-value {
+    margin: 0;
+    font-size: 1.3rem;
+    line-height: 1.1;
+    color: var(--story-text);
+  }
+
+  .intro-highlight-caption {
+    margin: 10px 0 0;
+    font-size: 0.92rem;
+    line-height: 1.52;
+    color: var(--story-muted);
+  }
+
+  .hint {
+    margin-top: 24px;
+    color: var(--story-accent-strong);
+    font-weight: 750;
+  }
+
+  :global(.who-link),
+  :global(.dataset-link),
+  :global(.hl) {
+    color: var(--story-accent-strong);
+    font-weight: 800;
+    text-decoration: none;
+    background-color: var(--story-accent-soft);
+    padding: 1px 5px;
+    border-radius: 999px;
+  }
 
   .story-body {
     position: fixed;
@@ -1041,18 +1415,24 @@
     z-index: 15;
   }
 
+  .story-body.user-mode {
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
   .text-column {
-    width: 25%;
+    width: 27%;
     height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
-    padding: 0 12px 0 24px;
+    padding: 0 16px 0 28px;
     flex-shrink: 0;
     scroll-behavior: auto;
     overscroll-behavior-y: contain;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    scrollbar-color: rgba(255, 245, 240, 0.26) transparent;
     transition:
       width 500ms cubic-bezier(0.4, 0, 0.2, 1),
       opacity 400ms ease,
@@ -1071,7 +1451,7 @@
     min-height: var(--step-min-height, 90vh);
     display: flex;
     align-items: center;
-    padding: 28px 12px;
+    padding: 24px 12px;
     box-sizing: border-box;
   }
 
@@ -1080,35 +1460,48 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 12px 20px 36px;
+    margin: 0 14px 0 10px;
+    padding: 18px 20px 22px;
     box-sizing: border-box;
-    color: #475569;
+    border-radius: 20px;
+    background: linear-gradient(
+      145deg,
+      rgba(255, 251, 249, 0.84),
+      rgba(255, 246, 241, 0.58)
+    );
+    border: 1px solid rgba(185, 73, 98, 0.14);
+    box-shadow:
+      0 14px 28px rgba(68, 18, 27, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.36);
   }
 
   .bridge-label {
     margin: 0 0 8px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 800;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--story-accent-strong);
   }
 
   .bridge-text {
     margin: 0;
-    font-size: 0.98rem;
-    line-height: 1.75;
+    font-size: 0.96rem;
+    line-height: 1.74;
+    color: var(--story-muted);
   }
 
   .step-card {
     width: 100%;
     position: relative;
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid rgba(203, 213, 225, 0.9);
-    border-radius: 22px;
+    background: linear-gradient(155deg, var(--story-panel), var(--story-panel-strong));
+    border: 1px solid var(--story-border);
+    border-radius: 24px;
     padding: 28px;
     box-sizing: border-box;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
+    box-shadow:
+      0 18px 40px rgba(31, 13, 16, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.52);
     backdrop-filter: blur(8px);
     transform: translateY(0) scale(1);
     transition:
@@ -1122,33 +1515,34 @@
   .step-card-scroll {
     visibility: visible;
     pointer-events: auto;
-    opacity: 0.42;
+    opacity: 0.48;
   }
 
   .step-card.active {
-    background: rgba(255, 255, 255, 0.96);
-    border-color: rgba(59, 130, 246, 0.45);
-    box-shadow: 0 24px 48px rgba(37, 99, 235, 0.12);
+    border-color: var(--story-border-strong);
+    box-shadow:
+      0 30px 62px rgba(43, 14, 18, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.58);
     transform: translateY(-6px) scale(1.01);
     opacity: 1;
   }
 
   .step-card.past {
-    opacity: 0.28;
+    opacity: 0.26;
   }
 
   .step-index {
     position: absolute;
     top: 18px;
     right: 18px;
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    background: rgba(226, 232, 240, 0.85);
-    color: #475569;
+    background: #f3e4df;
+    color: var(--story-accent-strong);
     font-size: 0.88rem;
     font-weight: 800;
     transition:
@@ -1158,34 +1552,35 @@
   }
 
   .step-card.active .step-index {
-    background: linear-gradient(135deg, #1d4ed8 0%, #38bdf8 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--story-accent-strong) 0%, var(--story-accent) 100%);
+    color: #fffaf8;
     transform: scale(1.06);
   }
 
   .section-tag {
     margin: 0 0 12px 0;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 800;
-    letter-spacing: 0.11em;
-    color: #1d4ed8;
+    letter-spacing: 0.13em;
+    color: var(--story-accent-strong);
   }
 
   .step-title {
     margin: 0 0 16px 0;
-    font-size: 1.95rem;
-    line-height: 1.05;
+    font-size: 2rem;
+    line-height: 1.02;
     font-weight: 800;
-    opacity: 0.82;
+    color: var(--story-text);
+    opacity: 0.84;
     transition: opacity 320ms ease;
   }
 
   .step-copy {
     margin: 0;
-    font-size: 1.03rem;
+    font-size: 1.02rem;
     line-height: 1.82;
-    color: #334155;
-    opacity: 0.86;
+    color: var(--story-muted);
+    opacity: 0.88;
     transition: opacity 360ms ease;
     transition-delay: 20ms;
   }
@@ -1201,10 +1596,10 @@
 
   .key-highlight {
     margin-top: 18px;
-    padding: 14px 16px;
-    border-radius: 16px;
-    background: rgba(248, 250, 252, 0.95);
-    border: 1px solid rgba(203, 213, 225, 0.9);
+    padding: 15px 16px;
+    border-radius: 18px;
+    background: #fffdfb;
+    border: 1px solid var(--story-border);
   }
 
   .highlight-label {
@@ -1213,37 +1608,37 @@
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--story-accent-strong);
   }
 
   .highlight-value {
     margin: 0;
-    font-size: 1.45rem;
+    font-size: 1.42rem;
     font-weight: 850;
-    color: #0f172a;
+    color: var(--story-text);
   }
 
   .highlight-caption {
     margin: 6px 0 0;
     font-size: 0.9rem;
     line-height: 1.5;
-    color: #475569;
+    color: var(--story-muted);
   }
 
   .interaction-prompt {
     margin: 18px 0 0;
     padding-top: 14px;
-    border-top: 1px solid rgba(203, 213, 225, 0.8);
+    border-top: 1px solid var(--story-border);
     font-size: 0.92rem;
     line-height: 1.55;
-    color: #1d4ed8;
-    font-weight: 650;
+    color: var(--story-accent-strong);
+    font-weight: 700;
   }
 
   .viz-panel {
     flex: 1;
     height: 100vh;
-    padding: 24px 24px 24px 8px;
+    padding: 24px 24px 24px 10px;
     box-sizing: border-box;
     z-index: 10;
     transition: padding 500ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -1258,76 +1653,48 @@
     width: 100%;
     height: 100%;
     position: relative;
-    background: rgba(255, 255, 255, 0.94);
-    border: 1px solid #dbe3ee;
-    border-radius: 24px;
+    background: linear-gradient(160deg, var(--story-panel-strong), var(--story-panel));
+    border: 1px solid var(--story-border-strong);
+    border-radius: 30px;
     box-sizing: border-box;
-    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.1);
+    box-shadow:
+      0 24px 56px rgba(30, 12, 16, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.56);
     overflow: hidden;
-    backdrop-filter: blur(10px);
-    transition:
-      transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 320ms ease,
-      box-shadow 320ms ease,
-      background 320ms ease;
-  }
-
-  .theme-vis1 .viz-box {
-    border-color: rgba(59, 130, 246, 0.22);
-    box-shadow: 0 24px 52px rgba(37, 99, 235, 0.11);
-  }
-
-  .theme-vis2 .viz-box {
-    border-color: rgba(245, 158, 11, 0.22);
-    box-shadow: 0 24px 52px rgba(217, 119, 6, 0.1);
-  }
-
-  .theme-vis3 .viz-box {
-    border-color: rgba(16, 185, 129, 0.2);
-    box-shadow: 0 24px 52px rgba(5, 150, 105, 0.1);
-  }
-
-  .theme-user .viz-box {
-    border-color: rgba(99, 102, 241, 0.2);
-    box-shadow: 0 24px 52px rgba(79, 70, 229, 0.1);
+    backdrop-filter: blur(12px);
   }
 
   .panel-glow {
     position: absolute;
     inset: 0;
-    border-radius: 24px;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.26),
-      transparent 32%
-    );
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at top right, var(--story-accent-soft) 0%, transparent 44%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.36), transparent 32%);
     pointer-events: none;
     z-index: 0;
+    opacity: 0.56;
   }
 
   .viz-scroll {
     position: relative;
     height: 100%;
-    padding: 0px 18px;
+    padding: 0 18px;
     box-sizing: border-box;
-    overflow: hidden; /*APR 26*/
+    overflow: hidden;
     overscroll-behavior-y: contain;
     z-index: 1;
-    display: flex; flex-direction: column;/*APR 26*/
+    display: flex;
+    flex-direction: column;
   }
 
   .viz-header {
     position: sticky;
     top: 0;
-    min-height: 76px;
-    margin: -18px -18px 16px -18px;
+    margin: -18px -18px 16px;
     padding: 18px 18px 14px;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.98) 78%,
-      rgba(255, 255, 255, 0)
-    );
-    backdrop-filter: blur(8px);
+    background: linear-gradient(180deg, var(--story-panel-strong) 78%, transparent 100%);
+    backdrop-filter: blur(10px);
     z-index: 3;
   }
 
@@ -1347,16 +1714,17 @@
 
   .viz-tag {
     margin: 0 0 6px 0;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     font-weight: 800;
-    letter-spacing: 0.1em;
-    color: #1d4ed8;
+    letter-spacing: 0.13em;
+    color: var(--story-accent-strong);
   }
 
   .viz-header h3 {
     margin: 0;
     font-size: 1.55rem;
     font-weight: 800;
+    color: var(--story-text);
   }
 
   .viz-meta {
@@ -1365,20 +1733,75 @@
 
   .viz-progress {
     margin: 0 0 4px 0;
-    color: #1d4ed8;
-    font-size: 0.84rem;
+    color: var(--story-accent-strong);
+    font-size: 0.82rem;
     font-weight: 700;
   }
 
   .viz-subtitle {
     margin: 0;
-    color: #475569;
-    font-size: 0.95rem;
+    color: var(--story-muted);
+    font-size: 0.94rem;
     line-height: 1.45;
   }
 
+  .viz-finding-card {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: #fffdfb;
+    border: 1px solid var(--story-border);
+    box-shadow: 0 8px 24px rgba(62, 18, 24, 0.08);
+  }
+
+  .viz-finding-label {
+    margin: 0 0 5px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--story-accent-strong);
+  }
+
+  .viz-finding-value {
+    margin: 0;
+    font-size: 1.08rem;
+    line-height: 1.35;
+    font-weight: 800;
+    color: var(--story-text);
+  }
+
+  .viz-finding-detail {
+    margin: 5px 0 0;
+    color: var(--story-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .viz-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .viz-action-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: var(--story-accent-soft);
+    border: 1px solid var(--story-border);
+    color: var(--story-accent-strong);
+    font-size: 0.77rem;
+    font-weight: 750;
+  }
+
   .viz-stage {
-    flex: 1; min-height: 0; display: flex; flex-direction: column; /*APR 26*/
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     position: relative;
     z-index: 1;
   }
@@ -1388,32 +1811,156 @@
     transform: translateY(0);
     transition: none;
     will-change: auto;
-    flex: 1; min-height: 0; display: flex; flex-direction: column; /*APR 26*/
-  }
-
-  .viz-step-transitioning {
-    opacity: 1;
-  }
-
-  .viz-step-transitioning.transition-forward {
-    transform: none;
-  }
-
-  .viz-step-transitioning.transition-backward {
-    transform: none;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .chart-shell {
     position: relative;
-    flex: 1; min-height: 0; display: flex; flex-direction: column; /*APR 26*/
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
-  .explore-stage {
+  .handoff-card {
+    margin: auto;
+    max-width: 540px;
+    padding: 32px;
+    border-radius: 24px;
+    background: linear-gradient(155deg, #fffdfb, var(--story-panel));
+    border: 1px solid var(--story-border);
+    text-align: center;
+    box-shadow: 0 18px 40px rgba(38, 14, 18, 0.12);
+  }
+
+  .handoff-label {
+    margin: 0 0 8px;
+    color: var(--story-accent-strong);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .handoff-card h4 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--story-text);
+  }
+
+  .handoff-card p {
+    margin: 10px 0 0;
+    color: var(--story-muted);
+    line-height: 1.62;
+  }
+
+  .user-section {
+    min-height: 100vh;
+    padding: 48px 32px;
+    box-sizing: border-box;
+    background:
+      linear-gradient(180deg, rgba(255, 250, 248, 0.68), rgba(255, 246, 241, 0.96));
+    display: block;
+  }
+
+  .user-section-inner {
     display: grid;
-    gap: 20px;
+    gap: 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .user-mode-hero {
+    padding: 28px 30px;
+    border-radius: 26px;
+    background: linear-gradient(155deg, var(--story-panel-strong), var(--story-panel));
+    border: 1px solid var(--story-border);
+    box-shadow: 0 16px 38px rgba(56, 18, 22, 0.09);
+  }
+
+  .user-mode-hero h2 {
+    margin: 0 0 10px;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 0.98;
+    color: var(--story-text);
+  }
+
+  .user-mode-hero p {
+    margin: 0;
+    max-width: 760px;
+    color: var(--story-muted);
+    line-height: 1.7;
+  }
+
+  .user-mode-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .user-mode-chips span {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #fffdfb;
+    border: 1px solid var(--story-border);
+    color: var(--story-accent-strong);
+    font-size: 0.82rem;
+    font-weight: 750;
+  }
+
+  .site-footer {
+    background: linear-gradient(180deg, #351017 0%, #22070d 100%);
+    color: #ead7d4;
+    padding: 42px 32px;
+  }
+
+  .footer-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    gap: 60px;
+    flex-wrap: wrap;
+  }
+
+  .footer-block h4 {
+    color: #fff5f2;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin: 0 0 12px 0;
+  }
+
+  .footer-block ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+
+  .footer-block a {
+    color: #ffd4cb;
+    text-decoration: none;
+  }
+
+  .footer-block a:hover {
+    text-decoration: underline;
   }
 
   @media (max-width: 1120px) {
+    .intro-highlight-grid {
+      grid-template-columns: 1fr;
+    }
+
     .viz-header-content {
       flex-direction: column;
       align-items: flex-start;
@@ -1425,9 +1972,10 @@
   }
 
   @media (max-width: 920px) {
-    .story-page::before {
-      width: 240px;
-      height: 240px;
+    .story-shell::before,
+    .story-shell::after {
+      width: 250px;
+      height: 250px;
     }
 
     .story-body {
@@ -1445,18 +1993,13 @@
       padding: 0;
     }
 
-    .text-card-stage {
-      display: none;
-    }
-
     .step {
       min-height: 70vh;
       padding: 14px 0;
     }
 
-    .step-card-scroll {
-      visibility: visible;
-      pointer-events: auto;
+    .step-bridge {
+      margin: 0 2px;
     }
 
     .viz-panel {
@@ -1475,7 +2018,7 @@
     .viz-scroll {
       height: auto;
       overflow: visible;
-      display: block; /*APR 26*/
+      display: block;
     }
 
     .viz-header {
@@ -1488,69 +2031,7 @@
     }
 
     .intro-box {
-      padding: 36px 24px;
+      padding: 38px 24px;
     }
   }
-    .user-section {
-      min-height: 100vh;
-      padding: 40px 32px;
-      box-sizing: border-box;
-      background: #f8fafc;
-      display: block;
-    }
-    .user-section-inner {
-      display: grid;
-      gap: 32px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    .story-body.user-mode {
-  opacity: 0;
-  pointer-events: none;
-  z-index: 0;}
-
-  .site-footer {
-  background: #1e293b;
-  color: #cbd5e1;
-  padding: 40px 32px;
-}
-
-.footer-inner {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  gap: 60px;
-  flex-wrap: wrap;
-}
-
-.footer-block h4 {
-  color: #f1f5f9;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  margin: 0 0 12px 0;
-}
-
-.footer-block ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 0.88rem;
-}
-
-.footer-block a {
-  color: #93c5fd;
-  text-decoration: none;
-}
-
-.footer-block a:hover {
-  text-decoration: underline;
-}
-  
-
-  
 </style>

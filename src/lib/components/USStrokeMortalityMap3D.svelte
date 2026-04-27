@@ -1120,12 +1120,15 @@
           ></circle>
         {/if}
 
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <rect
           class="brush-overlay"
           x={BRUSH_MARGIN.left}
           y={BRUSH_MARGIN.top}
           width={BRUSH_W - BRUSH_MARGIN.left - BRUSH_MARGIN.right}
           height={BRUSH_H - BRUSH_MARGIN.top - BRUSH_MARGIN.bottom}
+          aria-hidden="true"
+          role="presentation"
           onpointerdown={beginBrushInteraction}
         />
 
@@ -1192,12 +1195,12 @@
     font-size: 1.12rem;
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: #0f172a;
+    color: var(--story-text, #241419);
   }
 
   .caption {
     margin: 0;
-    color: #556273;
+    color: var(--story-muted, #6f5960);
     font-size: 0.89rem;
     line-height: 1.5;
     max-width: 78ch;
@@ -1208,10 +1211,10 @@
     padding: 7px 14px;
     font-size: 0.82rem;
     font-weight: 700;
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(255, 253, 251, 0.92);
+    border: 1px solid var(--story-border, #e8d2cb);
     border-radius: 999px;
-    color: #334155;
+    color: var(--story-accent-strong, #8e0f27);
     cursor: pointer;
     box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
     transition:
@@ -1232,8 +1235,8 @@
     overflow: hidden;
     align-self: center;
     max-width: 100%;
-    background: #f5f6f8;
-    border: 1px solid rgba(203, 213, 225, 0.58);
+    background: #fff9f7;
+    border: 1px solid var(--story-border, #e8d2cb);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.82),
       0 12px 30px rgba(15, 23, 42, 0.055);
@@ -1286,10 +1289,10 @@
     min-width: 164px;
     padding: 0.68rem 0.8rem;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.94);
-    color: #1e293b;
-    border: 1px solid rgba(148, 163, 184, 0.34);
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+    background: rgba(255, 253, 251, 0.94);
+    color: var(--story-text, #241419);
+    border: 1px solid var(--story-border, #e8d2cb);
+    box-shadow: 0 14px 30px rgba(53, 18, 22, 0.14);
     font-size: 0.87rem;
     line-height: 1.42;
     transform: translateY(-100%);
@@ -1302,7 +1305,7 @@
 
   .tt-hint {
     margin-top: 5px;
-    color: #9a3412;
+    color: var(--story-accent-strong, #8e0f27);
     font-size: 0.76rem;
     font-weight: 650;
   }
@@ -1311,9 +1314,9 @@
     margin-top: 16px;
     padding: 14px 14px 10px;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(203, 213, 225, 0.62);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    background: rgba(255, 253, 251, 0.86);
+    border: 1px solid var(--story-border, #e8d2cb);
+    box-shadow: 0 10px 24px rgba(53, 18, 22, 0.08);
   }
 
   .timeline-header {
@@ -1339,9 +1342,9 @@
     border-radius: 999px;
     font-size: 0.78rem;
     font-weight: 700;
-    color: #334155;
-    background: rgba(248, 250, 252, 0.92);
-    border: 1px solid rgba(203, 213, 225, 0.8);
+    color: var(--story-text, #241419);
+    background: rgba(255, 253, 251, 0.95);
+    border: 1px solid var(--story-border, #e8d2cb);
   }
 
   .series-swatch {
@@ -1356,7 +1359,7 @@
   }
 
   .series-pill.state {
-    color: #b91c1c;
+    color: var(--story-accent-strong, #8e0f27);
   }
 
   .timeline-meta {
@@ -1373,15 +1376,15 @@
     align-items: center;
     padding: 6px 10px;
     border-radius: 999px;
-    background: rgba(248, 250, 252, 0.92);
-    border: 1px solid rgba(203, 213, 225, 0.8);
-    color: #334155;
+    background: rgba(255, 253, 251, 0.95);
+    border: 1px solid var(--story-border, #e8d2cb);
+    color: var(--story-text, #241419);
     font-size: 0.78rem;
     font-weight: 750;
   }
 
   .timeline-year-pill {
-    color: #c2410c;
+    color: var(--story-accent-strong, #8e0f27);
   }
 
   .timeline-svg {
@@ -1398,7 +1401,7 @@
 
   .timeline-y-tick,
   .timeline-x-tick {
-    fill: #64748b;
+    fill: var(--story-muted, #6f5960);
     font-size: 11px;
     font-weight: 550;
   }
@@ -1420,7 +1423,7 @@
   }
 
   .timeline-line.state {
-    stroke: #c2410c;
+    stroke: var(--story-accent-strong, #8e0f27);
     stroke-width: 2.8;
   }
 
@@ -1429,7 +1432,7 @@
   }
 
   .timeline-point.state {
-    fill: rgba(194, 65, 12, 0.72);
+    fill: rgba(142, 15, 39, 0.72);
   }
 
   .timeline-current-dot {
@@ -1442,11 +1445,11 @@
   }
 
   .timeline-current-dot.state {
-    fill: #dc2626;
+    fill: var(--story-accent-strong, #8e0f27);
   }
 
   .timeline-playhead {
-    stroke: rgba(29, 78, 216, 0.9);
+    stroke: rgba(142, 15, 39, 0.82);
     stroke-width: 2;
     stroke-dasharray: 4 4;
   }
@@ -1477,12 +1480,12 @@
     font-size: 1.15rem;
     line-height: 1.1;
     font-weight: 850;
-    color: #0f172a;
+    color: var(--story-text, #241419);
   }
 
   .timeline-instruction {
     margin: 0;
-    color: #64748b;
+    color: var(--story-muted, #6f5960);
     font-size: 0.84rem;
     line-height: 1.45;
   }
@@ -1499,7 +1502,7 @@
 
   .legend-title {
     font-weight: 750;
-    color: #334155;
+    color: var(--story-text, #241419);
   }
 
   .grad {
@@ -1521,7 +1524,7 @@
 
   .legend-min,
   .legend-max {
-    color: #64748b;
+    color: var(--story-muted, #6f5960);
   }
 
   .dot-sep {
@@ -1530,7 +1533,7 @@
   }
 
   .legend-note {
-    color: #64748b;
+    color: var(--story-muted, #6f5960);
   }
 
   @media (max-width: 720px) {

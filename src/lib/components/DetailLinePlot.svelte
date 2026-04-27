@@ -1182,6 +1182,7 @@ function getDirectLabelWeight(id: string) {
   <div class="panel-header">
     <div>
       <h3 class="panel-title">{panelTitle}</h3>
+      <p class="panel-subtitle">{subtitle}</p>
     </div>
     <div class="header-right">
       {#if $selectedState}
@@ -1283,6 +1284,11 @@ function getDirectLabelWeight(id: string) {
         </div>
       {/if}
     </div>
+
+    <div class="note-block">
+      <p><strong>Reading note:</strong> {dataNote}</p>
+      <p><strong>Current takeaway:</strong> {takeawayText || "Select a state to generate a comparison takeaway."}</p>
+    </div>
   
     {#if loading}
       <div class="message-box">Loading vis3 data…</div>
@@ -1381,12 +1387,15 @@ function getDirectLabelWeight(id: string) {
           </text>
   
           {#each chartSeries as series (series.id + "-hitbox")}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
             <path
               d={lineGenerator(series.points) || ""}
               fill="none"
               stroke="transparent"
               stroke-width={Math.max(getStrokeWidth(series) + 12, 14)}
               pointer-events="stroke"
+              aria-hidden="true"
+              role="presentation"
               onmouseenter={() => setHoveredSeries(series.id)}
               onmouseleave={() => setHoveredSeries(null)}
             />
@@ -1614,10 +1623,10 @@ function getDirectLabelWeight(id: string) {
   
   <style>
     .detail-panel {
-      border: 1px solid #d9d9d9;
-      border-radius: 14px;
+      border: 1px solid var(--story-border, #e8d2cb);
+      border-radius: 18px;
       padding: 16px 20px 12px;
-      background: #fff;
+      background: linear-gradient(155deg, #fffdfb, var(--story-panel, #fff6f2));
       position: relative;
       height: 100%;
       box-sizing: border-box;
@@ -1639,20 +1648,22 @@ function getDirectLabelWeight(id: string) {
       margin: 0;
       font-size: 1.75rem;
       line-height: 1.15;
+      color: var(--story-text, #241419);
     }
   
     .panel-subtitle {
       margin: 8px 0 0;
-      color: #555;
+      color: var(--story-muted, #6f5960);
       max-width: 920px;
       line-height: 1.45;
     }
   
     .state-chip {
-      border: 1px solid #d2d2d2;
+      border: 1px solid var(--story-border, #e8d2cb);
       border-radius: 999px;
       padding: 8px 12px;
-      background: #fafafa;
+      background: #fffdfb;
+      color: var(--story-accent-strong, #8e0f27);
       font-weight: 600;
       white-space: nowrap;
     }
@@ -1678,39 +1689,40 @@ function getDirectLabelWeight(id: string) {
   
     .control-label {
       font-size: 0.95rem;
-      color: #555;
+      color: var(--story-muted, #6f5960);
       font-weight: 600;
     }
   
     .mode-btn,
     .legend-chip,
     .clear-btn {
-      border: 1px solid #bfbfbf;
-      border-radius: 10px;
-      background: #fff;
+      border: 1px solid var(--story-border, #e8d2cb);
+      border-radius: 12px;
+      background: #fffdfb;
       padding: 8px 12px;
       font: inherit;
       cursor: pointer;
       transition: all 120ms ease;
+      color: var(--story-text, #241419);
     }
   
     .mode-btn:hover,
     .legend-chip:hover,
     .clear-btn:hover:not(:disabled) {
-      background: #f6f6f6;
+      background: var(--story-accent-soft, #f6ddd8);
     }
   
     .mode-btn.selected,
     .legend-chip.selected {
-      border-color: #444;
-      background: #f1f1f1;
+      border-color: var(--story-border-strong, #cc5368);
+      background: var(--story-accent-soft, #f6ddd8);
       font-weight: 600;
     }
 
     .legend-chip.focus-chip {
-      border-color: #4d4d4d;
-      background: #f8fbff;
-      box-shadow: 0 0 0 2px rgba(78, 121, 167, 0.14);
+      border-color: var(--story-border-strong, #cc5368);
+      background: #fffaf8;
+      box-shadow: 0 0 0 2px rgba(204, 83, 104, 0.14);
       font-weight: 700;
     }
   
@@ -1730,9 +1742,9 @@ function getDirectLabelWeight(id: string) {
     }
   
     .legend-panel {
-  border: 1px solid #ececec;
+  border: 1px solid var(--story-border, #e8d2cb);
   border-radius: 12px;
-  background: #fcfcfc;
+  background: #fffdfb;
   padding: 10px 10px;
   display: flex;
   flex-direction: column;
@@ -1747,7 +1759,7 @@ function getDirectLabelWeight(id: string) {
   
     .legend-title {
   font-size: 0.75rem;
-  color: #555;
+  color: var(--story-muted, #6f5960);
   line-height: 1.3;
   word-break: break-word;
   max-width: 100%;
@@ -1758,7 +1770,7 @@ function getDirectLabelWeight(id: string) {
       margin-top: 8px;
       margin-bottom: 10px;
       font-size: 0.9rem;
-      color: #5f6b7a;
+      color: var(--story-muted, #6f5960);
       line-height: 1.4;
     }
   
@@ -1766,7 +1778,7 @@ function getDirectLabelWeight(id: string) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #555;
+  color: var(--story-muted, #6f5960);
   font-size: 0.88rem;
   font-weight: 600;
   flex-shrink: 0;
@@ -1801,13 +1813,13 @@ function getDirectLabelWeight(id: string) {
   
     .county-input-group label {
       font-size: 0.92rem;
-      color: #555;
+      color: var(--story-muted, #6f5960);
       font-weight: 600;
     }
   
     .selection-status {
       margin-top: 10px;
-      color: #666;
+      color: var(--story-muted, #6f5960);
       font-size: 0.92rem;
     }
   
@@ -1826,9 +1838,9 @@ function getDirectLabelWeight(id: string) {
       width: 100%;
       height: 100%;
       display: block;
-      border: 1px solid #efefef;
+      border: 1px solid var(--story-border, #e8d2cb);
       border-radius: 12px;
-      background: #fff;
+      background: #fffdfb;
     }
 
     .chart-svg path,
@@ -1844,11 +1856,11 @@ function getDirectLabelWeight(id: string) {
     .tooltip {
       position: absolute;
       pointer-events: none;
-      background: rgba(255, 255, 255, 0.97);
-      border: 1px solid #d5d5d5;
-      border-radius: 10px;
+      background: rgba(255, 253, 251, 0.97);
+      border: 1px solid var(--story-border, #e8d2cb);
+      border-radius: 14px;
       padding: 10px 12px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 24px rgba(53, 18, 22, 0.12);
       font-size: 0.92rem;
       min-width: 176px;
     }
@@ -1862,29 +1874,38 @@ function getDirectLabelWeight(id: string) {
     }
   
     .tooltip-note {
-      color: #666;
+      color: var(--story-muted, #6f5960);
       margin-top: 4px;
       font-size: 0.86rem;
     }
   
     .note-block {
       margin-top: 14px;
-      color: #444;
+      color: var(--story-text, #241419);
       line-height: 1.55;
       display: grid;
       gap: 6px;
-      background: #fbfbfb;
-      border: 1px solid #ececec;
+      background: #fffdfb;
+      border: 1px solid var(--story-border, #e8d2cb);
       border-radius: 12px;
       padding: 12px 14px;
     }
+
+    .note-block p {
+      margin: 0;
+      color: var(--story-muted, #6f5960);
+    }
+
+    .note-block strong {
+      color: var(--story-accent-strong, #8e0f27);
+    }
   
     .message-box {
-      border: 1px dashed #cfcfcf;
+      border: 1px dashed var(--story-border, #e8d2cb);
       border-radius: 12px;
       padding: 18px;
-      color: #555;
-      background: #fafafa;
+      color: var(--story-muted, #6f5960);
+      background: #fffdfb;
     }
   
     .message-box.error {
@@ -1903,8 +1924,9 @@ function getDirectLabelWeight(id: string) {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1.5px solid #999;
-  background: #f5f5f5;
+  border: 1px solid var(--story-border-strong, #cc5368);
+  background: #fff8f6;
+  color: var(--story-accent-strong, #8e0f27);
   cursor: pointer;
   font-size: 14px;
   flex-shrink: 0;
@@ -1915,14 +1937,15 @@ function getDirectLabelWeight(id: string) {
   top: 52px;
   right: 20px;
   z-index: 20;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
+  background: #fffdfb;
+  border: 1px solid var(--story-border, #e8d2cb);
+  border-radius: 16px;
   padding: 16px 18px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 14px 32px rgba(61, 20, 24, 0.14);
   max-width: 340px;
   font-size: 0.88rem;
   line-height: 1.6;
+  color: var(--story-muted, #6f5960);
 }
 
 .instructions-popup p { margin: 0 0 8px 0; }
@@ -1935,7 +1958,7 @@ function getDirectLabelWeight(id: string) {
   border: none;
   cursor: pointer;
   font-size: 13px;
-  color: #888;
+  color: var(--story-accent-strong, #8e0f27);
 }
 
 .chart-area {
@@ -1979,10 +2002,10 @@ function getDirectLabelWeight(id: string) {
   width: 100%;
   box-sizing: border-box;
   font-size: 0.8rem;
-  border: 1px solid #bfbfbf;
+  border: 1px solid var(--story-border, #e8d2cb);
   border-radius: 10px;
   padding: 6px 8px;
-  background: #fff;
+  background: #fffdfb;
   font: inherit;
   cursor: pointer;
 }

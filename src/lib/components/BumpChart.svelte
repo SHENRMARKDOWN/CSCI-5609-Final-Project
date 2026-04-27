@@ -523,12 +523,12 @@ const xAxisG = svgEl
 
   <div class="header-row">
   <h2>Stroke Mortality Rate(per 100,000 persons) Bump Chart</h2>
-  <button class="info-btn" on:click={() => showInstructions = !showInstructions}>ℹ</button>
+  <button class="info-btn" onclick={() => showInstructions = !showInstructions}>ℹ</button>
 </div>
 
 {#if showInstructions}
   <div class="instructions-popup">
-    <button class="close-btn" on:click={() => showInstructions = false}>✕</button>
+    <button class="close-btn" onclick={() => showInstructions = false}>✕</button>
     <p>This bump chart shows the stroke mortality rank of U.S. states. Higher ranks indicate higher mortality.</p>
     <p>The default view is set to 2019. Click year labels or empty space to return to the full trend view.</p>
     <p>Click on state labels or lines to filter by state. Click on years to highlight a specific year.</p>
@@ -536,32 +536,32 @@ const xAxisG = svgEl
 {/if}
 
     <div class="filter-buttons">
-      <button on:click={() => {selectedRegion = "All";scheduleRedraw(true);}}
+      <button onclick={() => {selectedRegion = "All";scheduleRedraw(true);}}
       class:selected={selectedRegion === "All"}>
       Overall
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "Midwest" ? "All" : "Midwest";scheduleRedraw(true);}}
+      <button onclick={() => {selectedRegion = selectedRegion === "Midwest" ? "All" : "Midwest";scheduleRedraw(true);}}
       class:selected={selectedRegion === "Midwest"}>
       Midwest
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "Northeast" ? "All" : "Northeast";scheduleRedraw(true);}}
+      <button onclick={() => {selectedRegion = selectedRegion === "Northeast" ? "All" : "Northeast";scheduleRedraw(true);}}
       class:selected={selectedRegion === "Northeast"}>
       Northeast
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "Southeast" ? "All" : "Southeast";scheduleRedraw(true);}}
+      <button onclick={() => {selectedRegion = selectedRegion === "Southeast" ? "All" : "Southeast";scheduleRedraw(true);}}
       class:selected={selectedRegion === "Southeast"}>
       Southeast
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "Southwest" ? "All" : "Southwest";scheduleRedraw(true);}}
+      <button onclick={() => {selectedRegion = selectedRegion === "Southwest" ? "All" : "Southwest";scheduleRedraw(true);}}
       class:selected={selectedRegion === "Southwest"}>
       Southwest
     </button>
 
-      <button on:click={() => {selectedRegion = selectedRegion === "West" ? "All" : "West";scheduleRedraw(true);}}
+      <button onclick={() => {selectedRegion = selectedRegion === "West" ? "All" : "West";scheduleRedraw(true);}}
       class:selected={selectedRegion === "West"}>
       West
     </button>
@@ -610,45 +610,52 @@ const xAxisG = svgEl
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  color: var(--story-text, #241419);
 }
 
 .vis-header h2 {
   margin: 0 0 6px 0;
+  color: var(--story-text, #241419);
 }
 
 .vis-header p {
   margin: 0 0 12px 0;
-  color: #555;
+  color: var(--story-muted, #6f5960);
 }
 
 .filter-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 15px;
 }
 
 .filter-buttons button {
-  padding: 6px 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  background: #f0f0f0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--story-border, #e8d2cb);
+  background: #fffdfb;
+  color: var(--story-accent-strong, #8e0f27);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .filter-buttons button:hover {
-  background: #e0e0e0;
+  transform: translateY(-1px);
+  background: var(--story-accent-soft, #f6ddd8);
 }
 
 .filter-buttons button.selected {
-  background: white;
-  border: 2px solid #333;
-  font-weight: bold;
-}
-
-.hint {
-  font-weight: bold;
-  color: #333;  
+  background: var(--story-accent-soft, #f6ddd8);
+  border-color: var(--story-border-strong, #cc5368);
+  box-shadow: 0 0 0 2px rgba(204, 83, 104, 0.12);
+  font-weight: 800;
 }
 
 .vis-row {
@@ -665,8 +672,9 @@ const xAxisG = svgEl
   max-height: 800px;
   overflow-y: auto;   
   font-size: 12px;
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--story-border, #e8d2cb);
   padding-left: 10px;
+  color: var(--story-muted, #6f5960);
 }
 
 .legend-item {
@@ -691,8 +699,9 @@ const xAxisG = svgEl
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1.5px solid #999;
-  background: #f5f5f5;
+  border: 1px solid var(--story-border-strong, #cc5368);
+  background: #fff8f6;
+  color: var(--story-accent-strong, #8e0f27);
   cursor: pointer;
   font-size: 14px;
 }
@@ -701,14 +710,15 @@ const xAxisG = svgEl
   top: 36px;
   right: 0;
   z-index: 20;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
+  background: #fffdfb;
+  border: 1px solid var(--story-border, #e8d2cb);
+  border-radius: 16px;
   padding: 16px 18px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 14px 32px rgba(61, 20, 24, 0.14);
   max-width: 340px;
   font-size: 0.88rem;
   line-height: 1.6;
+  color: var(--story-muted, #6f5960);
 }
 .close-btn {
   position: absolute;
@@ -718,7 +728,7 @@ const xAxisG = svgEl
   border: none;
   cursor: pointer;
   font-size: 13px;
-  color: #888;
+  color: var(--story-accent-strong, #8e0f27);
 }
 .vis-header {
   position: relative;
