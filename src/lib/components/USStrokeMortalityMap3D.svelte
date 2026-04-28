@@ -342,7 +342,7 @@
       resizeObserver = new ResizeObserver(() => {
         onResize();
       });
-      resizeObserver.observe(containerEl);
+      resizeObserver.observe(canvasWrapEl);
       onResize();
     } catch (e) {
       console.error(e);
@@ -506,10 +506,14 @@
   }
 
   function buildScene() {
-    scene = new THREE.Scene();
+  const initRect = canvasWrapEl.getBoundingClientRect();
+  const initW = initRect.width > 0 ? Math.round(initRect.width) : width;
+  const initH = initRect.height > 0 ? Math.round(initRect.height) : height;
+
+  scene = new THREE.Scene();
     scene.background = new THREE.Color(SCENE_BG);
 
-    camera = new THREE.PerspectiveCamera(40, width / height, 5, 3000);
+    camera = new THREE.PerspectiveCamera(40, initW / initH, 5, 3000);
     camera.position.set(0, 870, 720);
     camera.lookAt(0, 0, 0);
 
@@ -519,7 +523,7 @@
     });
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(width, height);
+    renderer.setSize(initW, initH);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -926,24 +930,23 @@
   function onResize() {
     if (!containerEl || !renderer || !camera) return;
 
-    const rect = containerEl.getBoundingClientRect();
+    const rect = canvasWrapEl.getBoundingClientRect();
     const availableWidth = Math.floor(rect.width);
     if (availableWidth <= 0) return;
     
     const w = Math.round(rect.width);
-    const h = Math.round(rect.height) || Math.max(320, Math.round((w / width) * height));
+    const h = Math.round(rect.height);if (availableWidth <= 0 || h <= 0) return;
 
-    renderer.setSize(w, h, false);
+    renderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
   }
 
   function resetView() {
     if (!camera || !controls) return;
 
     camera.position.set(0, 870, 720);
-    controls.target.set(0, 0, 0);
+    controls.target.copy(mapCenter);
     controls.update();
 
     if (availableYears.length) {
@@ -972,7 +975,7 @@
   }
 </script>
 
-<div class="map3d-shell" bind:this={containerEl}>
+<div class="map3d-shell" class:story={storyMode}>
   <div class="map3d-header">
     <div>
       <h3>U.S. Stroke Mortality, 3D Relief Map</h3>
@@ -993,8 +996,8 @@
   <div
     class="canvas-wrap"
     bind:this={canvasWrapEl}
-    style:width="{width}px"
-    style="flex: 1; min-height: 0;"
+    style:width="100%"
+    style:height="{storyMode ? '100%' : '500px'}"
   >
     {#if !dataReady && !loadError}
       <div class="overlay">Loading 3D scene…</div>
@@ -1185,13 +1188,11 @@
 
 <style>
   .map3d-shell {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 100%;
-    flex: 1;
-    min-height: 0;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 100%;
+}
 
   .map3d-header {
     display: flex;
@@ -1241,25 +1242,25 @@
   }
 
   .canvas-wrap {
-    position: relative;
-    border-radius: 20px;
-    overflow: hidden;
-    align-self: center;
-    max-width: 100%;
-    background: #fff9f7;
-    border: 1px solid var(--story-border, #e8d2cb);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.82),
-      0 12px 30px rgba(15, 23, 42, 0.055);
-    flex: 1;
-    min-height: 0;
-  }
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  align-self: stretch;
+  max-width: 100%;
+  background: #fff9f7;
+  border: 1px solid var(--story-border, #e8d2cb);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 12px 30px rgba(15, 23, 42, 0.055);
+  width: 100%;
+}
 
   .canvas-wrap :global(canvas) {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
+  display: block;
+  width: 100%;
+  height: 100% !important;
+  min-height: 0;
+}
 
   .canvas-wrap::after {
     content: "";
@@ -1560,6 +1561,10 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+}
+.map3d-shell.story {
+  flex: 1;
+  min-height: 0;
 }
 
   
