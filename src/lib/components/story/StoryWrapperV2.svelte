@@ -84,9 +84,9 @@
       step: 4,
       section: "vis1",
       title: "Mississippi Becomes the Guide",
-      text: `Regional level visualization shows a more clear picture of the trend and rank than the national level. However, it is still somehow too broad fo details. Could we be more specific to a state and get much more detailed information?
+      text: `Regional level visualization shows a more clear picture of the trend and rank than the national level. However, it is still somehow too broad for details. Could we be more specific to a state and get much more detailed information?
       <br><br> Luckily, Yes! We can choose a state by clicking on the line and it will be highlighted in the chart.
-      <br><br> Remember we mentione <span class="hl">Mississippi</span> in the previous <span class="hl">Step 3</span>? Let's explore this one. The chosen state anchors the rest of the <span class="hl">author-driven story</span>.`,
+      <br><br> Remember we mentioned <span class="hl">Mississippi</span> in the previous <span class="hl">Step 3</span>? Let's explore this one. The chosen state anchors the rest of the <span class="hl">Author-driven story</span>.`,
       prompt: "Story anchor: Mississippi remains highlighted in the next views.",
       highlight: {
         label: "Selected state",
@@ -106,16 +106,16 @@
     {
       step: 6,
       section: "vis2",
-      title: "Animate National Change",
+      title: "Focus on Mississippi",
       text: `Now, let's go back to our story and focus on the <span class="hl">Mississippi</span> state. We have already decided to focus on this state and selected the correpsonding line in the <span class="hl">bump chart</span>. 
-      <br><br>Now the map opens on the 2019 national distribution with Mississippi still highlighted, preserving continuity while shifting from rank to geography. 
-      <br><br>The scroll will animates the choropleth from 1999 to 2019 to enable the audience sees spatial change over time.`,
-      prompt: "Watch the year label: the map moves from 1999 to 2019.",
-      highlight: {
-        label: "Animated window",
-        value: "1999 → 2019",
-        caption: "This sweep shows change through time before the story zooms back into a single-year reading.",
+      <br><br>Now the map opens on the 2019 national distribution with Mississippi still highlighted, preserving continuity while shifting from rank to geography. `,
+      prompt: "Watch for: The select box locate to Mississippi and adjcent states.",
+       highlight: {
+        label: "Selected state",
+        value: "Mississippi",
+        caption: "The story stays focused on Mississippi while showing its place within the national landscape.",
       },
+  
     },
     {
       step: 7,
@@ -125,6 +125,11 @@
       <br><br> The <span class="hl">3D visualization</span> now replays yearly change from 1999 to 2019. State height and color both encode mortality, while the strip below lets the viewer anchor a start year, drag out a time window, and compare the selected state against the national average.
       <br><br> From the animation we could clearly see the overall moratlity trend is dropping, but the regional pattern remains the same.`,
       prompt: "Interaction: click any state to highlight it. Drag to rotate. Click or drag on the strip below to define a year window while scroll continues inside it.",
+      highlight: {
+        label: "Animated window",
+        value: "1999 → 2019",
+        caption: "This sweep shows change through time before the story zooms back into a single-year reading.",
+      },
     },
     {
       step: 8,
@@ -351,7 +356,7 @@
         subtitle:
           step === 5
             ? "2019 choropleth with Mississippi highlighted"
-            : "Animated national change from 1999 to 2019",
+            : "2019 choropleth with Mississippi highlighted",
       };
     }
 
@@ -483,7 +488,7 @@
       },
       2: {
         label: "Pattern",
-        value: "The Southeast stays near the top",
+        value: "The Southeast stays the top",
         detail: "The rank trajectories move, but the regional structure remains remarkably stable.",
       },
       4: {
@@ -491,11 +496,11 @@
         value: "Mississippi becomes the narrative guide",
         detail: "A single state now links rank, geography, and subgroup detail into one readable story.",
       },
-      6: {
-        label: "Time signal",
-        value: "The U.S. map gets lighter, but the regional pattern holds",
-        detail: "Across states, mortality generally declines over time, yet the same high-burden regions still stand out.",
-      },
+      //6: {
+      //  label: "Time signal",
+      //  value: "The nation improves, but the map keeps its shape",
+      //  detail: "Lighter colors suggest broad improvement even while persistent hotspots remain visible.",
+      //},
       7: {
         label: "Comparison",
         value: "National decline and local persistence coexist",
@@ -579,7 +584,7 @@
       },
       7: {
         height: 78,
-        text: "The 3D view is still the same mortality signal, but now time is explicit: the brush shows the national average against the selected state, and scroll advances the playhead through that range.",
+        text: "By the end of the animation, the country is lighter than it was in 1999. The 3D view is still the same mortality signal, but now time is explicit: the brush shows the national average against the selected state, and scroll advances the playhead through that range.The important question becomes: even after improvement, which places still stand out?",
       },
       8: {
         height: 45,
@@ -1037,14 +1042,22 @@
           </div>
 
           {#if bridge}
-            <div
-              class="step-bridge"
-              style={`--bridge-height: ${bridge.height}vh;`}
-            >
-              <p class="bridge-label">Transition</p>
-              <p class="bridge-text">{@html bridge.text}</p>
-            </div>
-          {/if}
+  <div class="step-bridge" style={`--bridge-height: ${bridge.height}vh;`}>
+    <p class="bridge-label">Transition</p>
+    <p class="bridge-text">{@html bridge.text}</p>
+    {#if getFinding(item.step)}
+      {@const finding = getFinding(item.step) ?? { label: "", value: "", detail: "" }}
+      <div class="viz-finding-card">
+        <p class="viz-finding-label">{finding.label}</p>
+        <p class="viz-finding-value">{finding.value}</p>
+        <p class="viz-finding-detail">{finding.detail}</p>
+      </div>
+    {/if}
+    {#each getInteractionChips(item.step) as chip}
+      <span class="viz-action-chip">{chip}</span>
+    {/each}
+  </div>
+{/if}
         {/each}
 
         <div style="height: 60vh;"></div>
@@ -1066,24 +1079,7 @@
                 </div>
               </div>
 
-              {#if getFinding(currentStep)}
-                {@const finding = getFinding(currentStep) ?? {
-                  label: "",
-                  value: "",
-                  detail: "",
-                }}
-                <div class="viz-finding-card">
-                  <p class="viz-finding-label">{finding.label}</p>
-                  <p class="viz-finding-value">{finding.value}</p>
-                  <p class="viz-finding-detail">{finding.detail}</p>
-                </div>
-              {/if}
 
-              <div class="viz-action-row">
-                {#each getInteractionChips(currentStep) as chip}
-                  <span class="viz-action-chip">{chip}</span>
-                {/each}
-              </div>
             </div>
 
             <div

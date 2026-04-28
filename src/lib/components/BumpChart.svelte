@@ -15,6 +15,8 @@
   let showInstructions = $state(false);// APR 26
   let redrawFrame = 0;
   let lastDrawSignature = "";
+  let lastMode: 'bar' | 'bump' | null = null;
+  let lastSelectedState: string | null = undefined;
 
   $effect(() => {
   if (!storyMode) return;
@@ -26,7 +28,9 @@
 
   if (selectedRegion !== "All") {
     selectedRegion = "All";
+    lastMode = null;
     scheduleRedraw(true);
+    
   }
 });
 
@@ -193,8 +197,8 @@
     West: d3.schemeReds[6],
   };
   const CHART_WIDTH = 1200;
-  const CHART_HEIGHT = 790;
-  const CHART_MARGIN = { top: 50, right: 80, bottom: 64, left: 180 };
+  const CHART_HEIGHT = 800;
+  const CHART_MARGIN = { top: 90, right: 80, bottom: 40, left: 180 };
 
   // Higher mortality gets a better (smaller) rank number
   function computeRankWithinRegion(data, region) {
@@ -253,239 +257,271 @@
     return colorScale(index);
   }
 
-  function draw(data) {
-    if (!svg || data.length === 0) return;
+  const TRANSITION_MS = 600;
 
-    const currentSelectedState = get(selectedState);
-    const currentSelectedYear = get(selectedYear);
-    const margin = CHART_MARGIN;
+function draw(data) {
+  if (!svg || data.length === 0) return;
 
-    const width = CHART_WIDTH;
-    const height = CHART_HEIGHT;
+  const currentSelectedState = get(selectedState);
+  const currentSelectedYear = get(selectedYear);
+  const margin = CHART_MARGIN;
+  const width = CHART_WIDTH;
+  const height = CHART_HEIGHT;
+  const svgEl = d3.select(svg);
 
-    d3.select(svg).selectAll("*").remove();
+  const yearExtent = d3.extent(data, (d) => d.year);
+  const maxRank = d3.max(data, (d) => d.rank) ?? 1;
+  const minYear = d3.min(data, (d) => d.year);
 
-    const svgEl = d3.select(svg);
+  const x = d3.scaleLinear()
+    .domain(yearExtent)
+    .range([margin.left, width - margin.right]);
 
-    const yearExtent = d3.extent(data, (d) => d.year);
-    const maxRank = d3.max(data, (d) => d.rank) ?? 1;
-    const minYear = d3.min(data, (d) => d.year);
+  const y = d3.scaleLinear()
+    .domain([maxRank, 1])
+    .range([height - margin.bottom, margin.top]);
 
-    const x = d3
-      .scaleLinear()
-      .domain(yearExtent)
-      .range([margin.left, width - margin.right]); // adjust for left margin
-    const y = d3
-      .scaleLinear()
-      .domain([maxRank, 1])
-      .range([height - margin.bottom, margin.top]); // adjust for top margin
-
-    const barX = d3
-    .scaleLinear()
+  const barX = d3.scaleLinear()
     .domain([0, d3.max(data, d => d.mortality) ?? 200])
     .range([margin.left, width - margin.right]);
 
-    const xAxis = currentSelectedYear !== null
-  ? d3.axisBottom(barX).ticks(6).tickFormat(d3.format(".1f"))
-  : d3.axisBottom(x)
-      .tickValues(d3.range(yearExtent[0], yearExtent[1] + 1))
-      .tickFormat(d3.format("d"));
+  const newMode = currentSelectedYear !== null ? 'bar' : 'bump';
+  const isStateSwitch = lastSelectedState !== undefined && lastSelectedState !== currentSelectedState;
+  lastSelectedState = currentSelectedState;
+  
+  const isSwitch = lastMode !== null && lastMode !== newMode;
+  lastMode = newMode;
 
-
-    const ranks = d3.range(1, maxRank + 1);
-    //const firstPoints = data.filter((d) => d.year === minYear);
-    const labelYear = currentSelectedYear ?? minYear;
-    const labelPoints = data
-    .filter((d) => d.year === labelYear)
-    .sort((a, b) => a.rank - b.rank);
-
-    svgEl
-      .selectAll(".grid-line")
-      .data(ranks)
-      .enter()
-      .append("line")
-      .attr("class", "grid-line")
-      .attr("x1", margin.left)
-      .attr("x2", width - margin.right)
-      .attr("y1", (d) => y(d))
-      .attr("y2", (d) => y(d))
-      .attr("stroke", "#ccc")
-      .attr("stroke-width", 0.5)
-      .attr("opacity", 0.5);
-
-    //if (currentSelectedYear !== null) {
-      //const bandWidth = 20;
-
-      //svgEl
-        //.append("rect")
-        //.attr("x", x(currentSelectedYear) - bandWidth / 2)
-        //.attr("y", margin.top)
-        //.attr("width", bandWidth)
-        //.attr("height", height - margin.top - margin.bottom)
-        //.attr("fill", "#ccc")
-        //.attr("opacity", 0.2);
-    //}
-
-    svgEl
-      .selectAll(".state-label")
-      .data(labelPoints)
-      .enter()
-      .append("text")
-      .attr("class", "state-label")
-      .attr("x", margin.left - 10)
-      .attr("y", (d) => y(d.rank))
-      .attr("dy", "0.35em")
-      .text((d) => `${stateFullName[d.state] || d.state} (${d.rank})`)
-      .attr("font-size", "10px")
-      .attr("fill", "#333")
-      .attr("text-anchor", "end").style("cursor", "pointer")  
-      .on("click", function (event, d) {
-        event.stopPropagation();
-        selectedState.update((curr) =>
-        curr === d.state ? null : d.state
-      );
-  })
-  .attr("font-weight", (d) =>
-  currentSelectedState === d.state ? "bold" : "normal")
-  .attr("fill", (d) =>
-  currentSelectedState === d.state ? "black" : "#666");
   
 
+  const t = d3.transition().duration(isSwitch ? TRANSITION_MS : 0).ease(d3.easeCubicInOut);
 
-const xAxisG = svgEl
-  .append("g")
-  .attr("transform", `translate(0, ${height - margin.bottom})`)
-  .call(xAxis);
+  const labelYear = currentSelectedYear ?? minYear;
+  const labelPoints = data.filter((d) => d.year === labelYear).sort((a, b) => a.rank - b.rank);
+  const grouped = d3.group(data, (d) => d.state);
 
-    xAxisG.select(".domain").attr("stroke", "#666");
-    xAxisG.selectAll("line").attr("stroke", "#999");
-    xAxisG.selectAll("text").attr("font-size", "10px").attr("fill", "#444");
+  legendStates = [...(
+    selectedRegion !== "All"
+      ? Object.keys(regionMap).filter((s) => regionMap[s] === selectedRegion).sort()
+      : ["Northeast", "Southeast", "Midwest", "Southwest", "West"]
+  )];
 
-    if (currentSelectedYear === null) {
-  xAxisG
-    .selectAll(".tick")
+  // ── If not a mode switch, clear and redraw immediately ──
+  if (!isSwitch) {
+    svgEl.selectAll("*").remove();
+    drawStatic(svgEl, data, { x, y, barX, margin, width, height, maxRank, minYear, yearExtent,
+      currentSelectedState, currentSelectedYear, labelPoints, grouped, newMode, isStateSwitch});
+    return;
+  }
+
+  // ── MODE SWITCH: animate out old, then draw new ──
+  if (newMode === 'bump') {
+    // BAR → BUMP: slide bars left to collapse, then draw bump lines
+    svgEl.selectAll("rect.bar")
+      .transition(t)
+      .attr("width", 0)
+      .attr("x", margin.left);
+
+    svgEl.selectAll("text.bar-label")
+      .transition(t)
+      .attr("opacity", 0);
+
+    svgEl.selectAll(".x-axis, text.chart-title, text.x-label")
+      .transition(t)
+      .attr("opacity", 0);
+
+    setTimeout(() => {
+      svgEl.selectAll("*").remove();
+      drawStatic(svgEl, data, { x, y, barX, margin, width, height, maxRank, minYear, yearExtent,
+        currentSelectedState, currentSelectedYear, labelPoints, grouped, newMode , isStateSwitch});
+
+      // Fade + draw bump lines in
+      svgEl.selectAll("path.bump-line")
+        .attr("opacity", 0)
+        .attr("stroke-dashoffset", function() { return this.getTotalLength(); })
+        .attr("stroke-dasharray", function() { return this.getTotalLength(); })
+        .transition().duration(TRANSITION_MS).ease(d3.easeCubicInOut)
+        .attr("opacity", 1)
+        .attr("stroke-dashoffset", 0);
+
+      svgEl.selectAll("circle.dot, text.state-label, .x-axis")
+        .attr("opacity", 0)
+        .transition().duration(TRANSITION_MS).ease(d3.easeCubicInOut)
+        .attr("opacity", 1);
+    }, TRANSITION_MS);
+
+  } else {
+    // BUMP → BAR: fade out lines, then slide bars in from left
+    svgEl.selectAll("path.bump-line, circle.dot")
+      .transition(t)
+      .attr("opacity", 0);
+
+    svgEl.selectAll("text.state-label, .x-axis")
+      .transition(t)
+      .attr("opacity", 0);
+
+    setTimeout(() => {
+      svgEl.selectAll("*").remove();
+      drawStatic(svgEl, data, { x, y, barX, margin, width, height, maxRank, minYear, yearExtent,
+        currentSelectedState, currentSelectedYear, labelPoints, grouped, newMode , isStateSwitch});
+
+      // Slide bars in from left
+      svgEl.selectAll("rect.bar")
+        .attr("width", 0)
+        .transition().duration(TRANSITION_MS).ease(d3.easeCubicInOut)
+        .attr("width", (d) => barX(d.mortality) - margin.left);
+
+      svgEl.selectAll("text.bar-label, .x-axis, text.chart-title")
+        .attr("opacity", 0)
+        .transition().duration(TRANSITION_MS).ease(d3.easeCubicInOut)
+        .attr("opacity", 1);
+    }, TRANSITION_MS);
+  }
+}
+
+function drawStatic(svgEl, data, { x, y, barX, margin, width, height, maxRank, minYear, yearExtent,
+  currentSelectedState, currentSelectedYear, labelPoints, grouped, newMode ,isStateSwitch}) {
+
+  const ranks = d3.range(1, maxRank + 1);
+
+  // Grid lines
+  svgEl.selectAll(".grid-line")
+    .data(ranks).enter().append("line")
+    .attr("class", "grid-line")
+    .attr("x1", margin.left).attr("x2", width - margin.right)
+    .attr("y1", (d) => y(d)).attr("y2", (d) => y(d))
+    .attr("stroke", "#ccc").attr("stroke-width", 0.5).attr("opacity", 0.5);
+
+  // State labels
+  svgEl.selectAll(".state-label")
+    .data(labelPoints).enter().append("text")
+    .attr("class", "state-label")
+    .attr("x", margin.left - 10)
+    .attr("y", (d) => y(d.rank))
+    .attr("dy", "0.35em")
+    .text((d) => `${stateFullName[d.state] || d.state} (${d.rank})`)
+    .attr("font-size", "10px")
+    .attr("text-anchor", "end")
+    .attr("font-weight", (d) => currentSelectedState === d.state ? "bold" : "normal")
+    .attr("fill", (d) => currentSelectedState === d.state ? "black" : "#666")
     .style("cursor", "pointer")
     .on("click", function (event, d) {
       event.stopPropagation();
-      selectedYear.update((curr) => (curr === d ? null : d));
+      selectedState.update((curr) => curr === d.state ? null : d.state);
     });
-}
 
-    svgEl
-      .append("text")
-      .attr("x", width / 2)
-      .attr("y", height - 16)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "18px")
-      .attr("fill", "#333")
-      .text(currentSelectedYear !== null ? "Mortality Rate(per 100,000 persons)" : "Year");
+  // X axis
+  const xAxis = currentSelectedYear !== null
+    ? d3.axisBottom(barX).ticks(6).tickFormat(d3.format(".1f"))
+    : d3.axisBottom(x)
+        .tickValues(d3.range(yearExtent[0], yearExtent[1] + 1))
+        .tickFormat(d3.format("d"));
 
-      if (currentSelectedYear !== null) {
-        svgEl
-        .append("text")
-        .attr("x", width / 2)
-        .attr("y", margin.top - 35) 
-        .attr("text-anchor", "middle")
-        .attr("font-size", "16px")
-        .attr("fill", "#333")
-        .text(`Stroke Mortality by State — ${currentSelectedYear}`);
+  const xAxisG = svgEl.append("g")
+    .attr("class", "x-axis")
+    .attr("transform", `translate(0, ${height - margin.bottom})`)
+    .call(xAxis);
+
+  xAxisG.select(".domain").attr("stroke", "#666");
+  xAxisG.selectAll("line").attr("stroke", "#999");
+  xAxisG.selectAll("text").attr("font-size", "10px").attr("fill", "#444");
+
+  if (currentSelectedYear === null) {
+    xAxisG.selectAll(".tick").style("cursor", "pointer")
+      .on("click", function (event, d) {
+        event.stopPropagation();
+        selectedYear.update((curr) => (curr === d ? null : d));
+      });
+  }
+
+  // X label
+  svgEl.append("text").attr("class", "x-label")
+    .attr("x", width / 2).attr("y", height)
+    .attr("text-anchor", "middle").attr("font-size", "18px").attr("fill", "#333")
+    .text(currentSelectedYear !== null ? "Mortality Rate(per 100,000 persons)" : "Year");
+
+  // Chart title (bar mode only)
+  if (currentSelectedYear !== null) {
+    svgEl.append("text").attr("class", "chart-title")
+      .attr("x", width / 2).attr("y", margin.top - 35)
+      .attr("text-anchor", "middle").attr("font-size", "16px").attr("fill", "#333")
+      .text(`Stroke Mortality by State — ${currentSelectedYear}`);
+  }
+
+  // Y axis label
+  svgEl.append("text")
+    .attr("x", margin.left - 120).attr("y", margin.top - 20)
+    .attr("text-anchor", "start").attr("font-size", "20px").attr("fill", "#333")
+    .text("State");
+
+  // Lines / bars per state
+  grouped.forEach((values, state) => {
+    const sortedValues = [...values].sort((a, b) => d3.ascending(a.year, b.year));
+    const isSelected = currentSelectedState === null || currentSelectedState === state;
+
+    if (currentSelectedYear !== null) {
+      // BAR MODE
+      const yearData = sortedValues.find((d) => d.year === currentSelectedYear);
+      if (yearData) {
+        svgEl.append("rect")
+          .attr("class", "bar")
+          .datum(yearData)
+          .attr("x", margin.left)
+          .attr("y", y(yearData.rank) - 6)
+          .attr("width", barX(yearData.mortality) - margin.left)
+          .attr("height", 12)
+          .attr("fill", getStateColor(state))
+          .attr("opacity", 1);
+
+        svgEl.append("text")
+          .attr("class", "bar-label")
+          .attr("x", barX(yearData.mortality) - 6)
+          .attr("y", y(yearData.rank))
+          .attr("dy", "0.35em")
+          .attr("text-anchor", "end")
+          .attr("font-size", "10px")
+          .attr("fill", "white")
+          .attr("font-weight", "600")
+          .text(d3.format(".1f")(yearData.mortality));
       }
+    } else {
+      // BUMP MODE
+      const line = d3.line().x((d) => x(d.year)).y((d) => y(d.rank));
 
-    svgEl
-      .append("text")
-      .attr("x", margin.left-120)
-      .attr("y", margin.top - 20)
-      .attr("text-anchor", "start")
-      .attr("font-size", "20px")
-      .attr("fill", "#333")
-      .text("State"); // Y-axis label
+      svgEl.append("path")
+      .datum(sortedValues)
+      .attr("class", `bump-line line-${state}`)
+      .attr("fill", "none")
+      .attr("stroke", getStateColor(state))
+      .attr("stroke-width", currentSelectedState === state ? 10 : 6)
+      .attr("d", line)
+      .attr("opacity", isStateSwitch ? 1 : (isSelected ? 1 : 0.1))
+      .style("cursor", "pointer")
+      .on("click", function (event) {
+        event.stopPropagation();
+        selectedState.update((curr) => (curr === state ? null : state));
+      })
+      .transition().duration(isStateSwitch ? 500 : 0).ease(d3.easeCubicInOut)
+      .attr("opacity", isSelected ? 1 : 0.1);
 
-    const line = d3
-      .line()
-      .x((d) => x(d.year))
-      .y((d) => y(d.rank));
-
-    const grouped = d3.group(data, (d) => d.state);
-
-    legendStates = [...(
-      selectedRegion !== "All"
-      ? Object.keys(regionMap)
-      .filter((s) => regionMap[s] === selectedRegion)
-      .sort()
-      : ["Northeast", "Southeast", "Midwest", "Southwest", "West"]
-    
-    )];
-
-    grouped.forEach((values, state) => {
-      const sortedValues = [...values].sort((a, b) =>
-        d3.ascending(a.year, b.year),
-      );
-      const isSelected =
-        currentSelectedState === null || currentSelectedState === state;
-
-      svgEl
-        .append("path")
-        .datum(sortedValues)
-        .attr("class", `line-${state}`)
-        .attr("fill", "none")
-        .attr("stroke", getStateColor(state))
-        .attr("stroke-width", currentSelectedState === state ? 10 : 6)
-        .attr("opacity", currentSelectedYear ? 0 : (isSelected ? 1 : 0.1))
-        .attr("d", line)
-        .style("cursor", "pointer")
-        .on("click", function (event) {
-          event.stopPropagation();
-          selectedState.update((curr) => (curr === state ? null : state));
-        });
-
-        if (currentSelectedYear !== null) {
-          const yearData = sortedValues.find(
-            (d) => d.year === currentSelectedYear);
-            if (yearData) {
-              svgEl
-              .append("rect")
-              .attr("x", margin.left)
-              .attr("y", y(yearData.rank) - 6)
-              .attr("width", barX(yearData.mortality) - margin.left)
-              .attr("height", 12)
-              .attr("fill", getStateColor(state))
-              .attr("opacity", 1);
-
-              svgEl
-              .append("text")
-              .attr("x", barX(yearData.mortality) - 6)   
-              .attr("y", y(yearData.rank))
-              .attr("dy", "0.35em")
-              .attr("text-anchor", "end")              
-              .attr("font-size", "10px")
-              .attr("fill", "white")                  
-              .attr("font-weight", "600")
-              .text(d3.format(".1f")(yearData.mortality));
-            }
-        }
-          
-
-      svgEl
-      .selectAll(`.dot-${state}`)
-      .data(sortedValues)
-      .enter()
-      .append("circle")
+      svgEl.selectAll(`.dot-${state}`)
+      .data(sortedValues).enter().append("circle")
+      .attr("class", `dot dot-${state}`)
       .attr("cx", (d) => x(d.year))
       .attr("cy", (d) => y(d.rank))
-      .attr("fill", getStateColor(state))
-      .attr("opacity", currentSelectedYear !== null ? 0 : (isSelected ? 1 : 0.1))
       .attr("r", currentSelectedState === state ? 12 : 8)
-      .attr("class", `dot dot-${state}`)
-      
-  
-  ;
-    });
+      .attr("fill", getStateColor(state))
+      .attr("opacity", isStateSwitch ? 1 : (isSelected ? 1 : 0.1))
+      .transition().duration(isStateSwitch ? 500 : 0).ease(d3.easeCubicInOut)
+      .attr("opacity", isSelected ? 1 : 0.1);
+    }
+  });
 
-    svgEl.on("click", () => {
-      selectedState.set(null);
-      selectedYear.set(null);
-    });
-  }
+  svgEl.on("click", () => {
+    selectedState.set(null);
+    selectedYear.set(null);
+  });
+}
 
   function redraw() {
     if (!svg) return;
@@ -605,7 +641,8 @@ const xAxisG = svgEl
 
 <style>
 .vis-container {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -661,9 +698,10 @@ const xAxisG = svgEl
 .vis-row {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .legend-container {
@@ -732,15 +770,19 @@ const xAxisG = svgEl
 }
 .vis-header {
   position: relative;
+  flex-shrink: 0;
 }
 .svg-wrapper {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
 }
 
 .svg-wrapper svg {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
 }
 </style>

@@ -1109,9 +1109,9 @@ function getDirectLabelWeight(id: string) {
       : $selectedVis3Mode === "overall"
         ? `Official state-level trend for adults 35+ in ${stateName}. Unit: per 100,000.`
         : $selectedVis3Mode === "county"
-          ? `County comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state average, and one county is emphasized at a time. Unit: per 100,000.`
+          ? `County comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state average. Unit: per 100,000.`
           : $selectedVis3Mode === "race"
-            ? `Race comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state baseline, and one race subgroup is emphasized at a time. Unit: per 100,000.`
+            ? `Race comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state baseline. Unit: per 100,000.`
             : `${modeLabel} comparison in ${stateName}, ages ${$selectedAgeGroup}. Dashed gray line = state baseline. Unit: per 100,000.`;
   
     $: yTickFormat =
@@ -1749,22 +1749,24 @@ function getDirectLabelWeight(id: string) {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow-y: scroll;
+  overflow-y: auto;
+  align-self: stretch;
+  min-height: 0;
   scrollbar-width: thin;
-  scrollbar-color: #ccc transparent;
+  scrollbar-color: #aaa #f0e8e6;
   box-sizing: border-box;
   width: 200px;
   flex-shrink: 0;
 }
   
     .legend-title {
-  font-size: 0.75rem;
-  color: var(--story-muted, #6f5960);
-  line-height: 1.3;
-  word-break: break-word;
-  max-width: 100%;
-  flex-shrink: unset;
-}
+      font-size: 0.75rem;
+      color: var(--story-muted, #6f5960);
+      line-height: 1.3;
+      word-break: break-word;
+      max-width: 100%;
+      flex-shrink: unset;
+    }
 
     .focus-hint {
       margin-top: 8px;
@@ -1775,15 +1777,15 @@ function getDirectLabelWeight(id: string) {
     }
   
     .reference-note {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--story-muted, #6f5960);
-  font-size: 0.88rem;
-  font-weight: 600;
-  flex-shrink: 0;
-  margin-bottom: 0;
-}
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--story-muted, #6f5960);
+      font-size: 0.88rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-bottom: 0;
+    }
   
     .line-swatch {
       width: 28px;
