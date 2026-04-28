@@ -9,12 +9,14 @@
   import { selectedState, selectedYear } from "$lib/stores";
 
   export let width: number = 960;
-  export let height: number = 600;
+  export let height: number = 500;
   export let initialYear: number = 2019;
   export let showYearSlider: boolean = true;
   export let storyMode: boolean = false;
   export let storyProgress: number = 0;
   export let active: boolean = true;
+  
+  let showBrush = false;
 
   $: showYearSlider;
   $: storyProgress;
@@ -537,7 +539,7 @@
     controls.maxDistance = 1600;
     controls.minPolarAngle = Math.PI * 0.18;
     controls.maxPolarAngle = Math.PI * 0.49;
-    controls.target.set(0, 0, 0);
+    controls.target.set(0, 0, 200);
     controls.update();
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd7dbe2, 0.95));
@@ -927,13 +929,14 @@
     const rect = containerEl.getBoundingClientRect();
     const availableWidth = Math.floor(rect.width);
     if (availableWidth <= 0) return;
-
-    const w = Math.min(width, availableWidth);
-    const h = Math.max(320, Math.round((w / width) * height));
+    
+    const w = Math.round(rect.width);
+    const h = Math.round(rect.height) || Math.max(320, Math.round((w / width) * height));
 
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
   }
 
   function resetView() {
@@ -991,7 +994,7 @@
     class="canvas-wrap"
     bind:this={canvasWrapEl}
     style:width="{width}px"
-    style:height="{height}px"
+    style="flex: 1; min-height: 0;"
   >
     {#if !dataReady && !loadError}
       <div class="overlay">Loading 3D scene…</div>
@@ -1016,7 +1019,13 @@
     {/if}
   </div>
 
-  {#if availableYears.length > 0}
+  {#if storyMode}
+  <button class="brush-toggle-btn" onclick={() => showBrush = !showBrush}>
+    {showBrush ? '▲ Hide timeline' : '▼ Show timeline'}
+  </button>
+  {/if}
+
+  {#if availableYears.length > 0 && (!storyMode || showBrush)}
     <div class="timeline-card">
       <div class="timeline-header">
         <div class="timeline-series-legend">
@@ -1180,6 +1189,8 @@
     flex-direction: column;
     gap: 12px;
     max-width: 100%;
+    flex: 1;
+    min-height: 0;
   }
 
   .map3d-header {
@@ -1240,6 +1251,8 @@
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.82),
       0 12px 30px rgba(15, 23, 42, 0.055);
+    flex: 1;
+    min-height: 0;
   }
 
   .canvas-wrap :global(canvas) {
@@ -1535,6 +1548,21 @@
   .legend-note {
     color: var(--story-muted, #6f5960);
   }
+
+  .brush-toggle-btn {
+  align-self: flex-end;
+  margin: 4px 8px 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--story-border, #e8d2cb);
+  background: #fffdfb;
+  color: var(--story-accent-strong, #8e0f27);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+  
 
   @media (max-width: 720px) {
     .map3d-header {
