@@ -1190,13 +1190,15 @@
           </ul>
         </div>
         <div class="footer-block">
-          <h4>Contributors</h4>
+          <h4>Contributors & acknowledgments</h4>
           <ul>
             <li>Lechen Shen</li>
             <li>Songlin Shang</li>
             <li>Ruixing Lu</li>
             <li>Jacob Sun</li>
             <li>Chenzhi Zhao</li>
+            <li>Thanks to everyone who gave us suggestions and advice through the peer review. We value your opinions and made modifications accordingly.
+Also, thanks to Dr. Qianwen Wang, who inspired us to re-modify our initial design and data analysis after the FP1, and consistently provided useful suggestions. </li>
           </ul>
         </div>
       </div>
