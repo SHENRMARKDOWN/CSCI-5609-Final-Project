@@ -6,9 +6,8 @@ Hello everyone! This is the Final Project of Group 'plot' for CSCI 5609. This is
 
 **Dataset:** [Stroke Mortality Data Among US Adults (35+) by State/Territory and County](https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021)
 
-**Clarification:** After we downloaded the
-dataset and conducted the preliminary analysis, we found that it actually included data from 1999 to
-2019. However, at the time we compiled this file and the project, the data source webpage and link had been modified to include data from 2019 to 2021. Therefore, we decided to continue our project using the dataset we downloaded and provided in FP1 (Feb 2026), the stroke mortality dataset from 1999 to 2019. The original dataset is available upon request.
+**Clarification:** After we downloaded the dataset and conducted the preliminary analysis, we found that it actually included data from 1999 to 2019. However, at the time we compiled this file and the project, the data source webpage and link had been modified to include data from 2019 to 2021. Therefore, we decided to continue our project using the dataset we downloaded and provided in FP1 (Feb 2026), the stroke mortality dataset from 1999 to 2019. The original dataset is available upon request.
+
 ---
 
 ## How to Use This Website
@@ -25,16 +24,16 @@ The **Guided Story** has two panels, the panel on the left is the text informati
 A static snapshot of stroke mortality rates by state for 2019. Use this to get a sense of which states have the highest burden. 
 
 #### VIS 1 · Bump Chart: 1999–2019 Trends
-The bar chart trasferred into a **Bump Chart** showing how each state's mortality rank has changed over two decades.  
+The bar chart will be trasferred into a **Bump Chart** showing how each state's mortality rank has changed over two decades.  
 
-- **Select buttons** appear that let you filter the bump chart by US region. Click a region to focus on a subset of states and reduce visual clutter.
+- **Select Buttons** appear that let you filter the bump chart by US region. Click a region to focus on a subset of states and reduce visual clutter.
 
 - The guided narrative focuses on **Mississippi**, which has persistently high mortality. This focus will be forwarded into every subsequent visualization.
 
 #### VIS 2 · Choropleth Map — 2019 Snapshot
 A 2D US map colored by stroke mortality rate for 2019. Darker colors indicate higher mortality.
 
-- **Drag a selection box** on the map to highlight a region — the mortality rates for states within that box appear as glyphs on the side.
+- Drag a **Selection Box** on the map to highlight a region — the mortality rates for states within that box appear as glyphs on the side.
 - The selected state (Mississippi) is highlighted automatically.
 
 #### VIS 2 · 3D Map — Animated 1999–2019 Sweep
@@ -46,17 +45,16 @@ Interactions available during this step:
 - **Drag on the timeline strip** at the bottom to define a year window and compare your selected state against the national average.
 
 #### VIS 3 · Detail Line Chart — Mississippi Baseline
-The view switches to a **detailed line chart** focused entirely on Mississippi. A single overall mortality line is shown first as a clean reference baseline.
+The view switches to a **detailed line chart** focused entirely on Mississippi. A single overall mortality line is shown first as a clean reference baseline. Following visualizations will appear on the chart by scrolling:
 
-- Lines for overall, male, and female mortality within the 35–64 age group are added one by one. Watch whether the male and female trends separate or converge over time.
-
-- The sex lines are removed and the chart resets to the overall 35–64 baseline, preparing for the racial subgroup comparison.
+- Lines for overall, male, and female mortality within the 35–64 age group are added one by one. 
 
 - Racial subgroup lines are revealed one by one.
 
 - Five counties in Mississippi are highlighted one by one against the state average: **Bolivar, Leflore, Humphreys, Hinds, and Sunflower**. These were selected because they reveal the most meaningful variation within the state.
 
 Hover over any line to keep it emphasized while the others fade. This lets you focus on one comparison at a time.
+
 ---
 
 ### Part 2 — User-Driven Dashboard (Step 14+)
@@ -64,8 +62,6 @@ Hover over any line to keep it emphasized while the others fade. This lets you f
 After Step 13, the guided story ends and you enter the **free exploration dashboard**. 
 
 #### What you have:
-
-## Visualizations at a Glance
 
 | Visualization | What it shows |
 |---|---|
