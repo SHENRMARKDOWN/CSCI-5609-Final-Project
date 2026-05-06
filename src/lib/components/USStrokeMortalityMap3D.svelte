@@ -514,7 +514,7 @@
     scene.background = new THREE.Color(SCENE_BG);
 
     camera = new THREE.PerspectiveCamera(40, initW / initH, 5, 3000);
-    camera.position.set(0, 870, 720);
+   camera.position.set(0, 820, 660);
     camera.lookAt(0, 0, 0);
 
     renderer = new THREE.WebGLRenderer({
@@ -543,7 +543,7 @@
     controls.maxDistance = 1600;
     controls.minPolarAngle = Math.PI * 0.18;
     controls.maxPolarAngle = Math.PI * 0.49;
-    controls.target.set(0, 0, 200);
+    controls.target.set(0, 0, 80);
     controls.update();
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd7dbe2, 0.95));
