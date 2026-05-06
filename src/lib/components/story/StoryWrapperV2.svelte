@@ -59,7 +59,8 @@
       According to the <a href="http://who.int/news-room/fact-sheets/detail/stroke" target="_blank" class="who-link">WHO</a>'s definition, a stroke is a medical emergency that occurs when blood flow to the brain is interrupted, either due to a blockage or bleeding.
       This lack of blood flow can lead to brain cell death and serious complications. Strokes can be fatal and need immediate treatment. 
       <br><br>Narrow down to U.S., let's explore the <a href="https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021" target="_blank" class="dataset-link">Stroke Mortality Data Among US Adults (35+) by State/Territory and County</a> dataset. 
-      <br><br><span class="hl">Mortality</span> refers to the frequency of death within a certain population. Mortality rate is the number of deaths per 100,000(this number could vary).In this project, the stroke mortality explicitly refers to the how many people died of stroke per 100,000 in a given year. `,
+      <br><br><span class="hl">Mortality</span> refers to the frequency of death within a certain population. Mortality rate is the number of deaths per 100,000(this number could vary).In this project, the stroke mortality explicitly refers to the how many people died of stroke per 100,000 in a given year. 
+      <br><br><span class="hl">Dataset</span>For this dataset, mortality is aggregated as the simple average of all available Data_Value records where Sex == "Overall" after filtering the dataset to “All stroke” and “Age-Standardized, Spatiotemporally Smoothed Rate.” for each state and year. `,
       prompt: "Key question: Which states has the highest stroke mortality in 2019?",
     },
     {
@@ -1171,6 +1172,10 @@
       <div class="footer-inner">
         <div class="footer-block">
           <h4>Data Sources</h4>
+          <p class="data-note">
+            This project uses the stroke mortality dataset downloaded during FP1, which contains records from 1999 to 2019. 
+            The linked data source page has since been updated to a 2019–2021 version. The orginal dataset could be provided upon request.
+          </p>
           <ul>
             <li>
               <a href="https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021" target="_blank">
