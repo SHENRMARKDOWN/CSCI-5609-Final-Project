@@ -23,6 +23,8 @@ The **Guided Story** has two panels, the panel on the left is the text informati
 #### VIS 1 · 2019 Rank Overview (Bar Chart)
 A static snapshot of stroke mortality rates by state for 2019. Use this to get a sense of which states have the highest burden. 
 
+![2019 Rank Overview](README_figures/final_bar.png)
+
 #### VIS 1 · Bump Chart: 1999–2019 Trends
 The bar chart will be trasferred into a **Bump Chart** showing how each state's mortality rank has changed over two decades.  
 
@@ -30,22 +32,28 @@ The bar chart will be trasferred into a **Bump Chart** showing how each state's 
 
 - The guided narrative focuses on **Mississippi**, which has persistently high mortality. This focus will be forwarded into every subsequent visualization.
 
+![Bump Chart: 1999–2019 Trends](README_figures/final_bump_selected.png)
+
 #### VIS 2 · Choropleth Map — 2019 Snapshot
 A 2D US map colored by stroke mortality rate for 2019. Darker colors indicate higher mortality.
 
 - Drag a **Selection Box** on the map to highlight a region — the mortality rates for states within that box appear as glyphs on the side.
 - The selected state (Mississippi) is highlighted automatically.
 
+![Choropleth Map — 2019 Snapshot](README_figures/final_map_glyph.png)
+
 #### VIS 2 · 3D Map — Animated 1999–2019 Sweep
-The visualization switches to a **3D map** where each state's height and color both encode its mortality rate. An animation plays through every year from 1999 to 2019.
+The visualization switches to a **3D Map** where each state's height and color both encode its mortality rate. An animation plays through every year from 1999 to 2019.
 
 Interactions available during this step:
 - **Click any state** to highlight it and pin the detail panel to that state with comparison to natioanl level.
 - **Drag to rotate** the 3D map and view it from different angles.
 - **Drag on the timeline strip** at the bottom to define a year window and compare your selected state against the national average.
 
+![3D Map](README_figures/final_3d_relief.png)
+
 #### VIS 3 · Detail Line Chart — Mississippi Baseline
-The view switches to a **detailed line chart** focused entirely on Mississippi. A single overall mortality line is shown first as a clean reference baseline. Following visualizations will appear on the chart by scrolling:
+The view switches to a **Detailed Line Chart** focused entirely on Mississippi. A single overall mortality line is shown first as a clean reference baseline. Following visualizations will appear on the chart by scrolling:
 
 - Lines for overall, male, and female mortality within the 35–64 age group are added one by one. 
 
@@ -54,6 +62,8 @@ The view switches to a **detailed line chart** focused entirely on Mississippi. 
 - Five counties in Mississippi are highlighted one by one against the state average: **Bolivar, Leflore, Humphreys, Hinds, and Sunflower**. These were selected because they reveal the most meaningful variation within the state.
 
 Hover over any line to keep it emphasized while the others fade. This lets you focus on one comparison at a time.
+
+![3D Map](README_figures/final_detail_mississippi.png)
 
 ---
 
