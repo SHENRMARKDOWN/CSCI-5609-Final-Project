@@ -2,6 +2,8 @@
 
 Hello everyone! This is the Final Project of Group 'plot' for CSCI 5609. This is an interactive and scrollytelling visualization project of stroke mortality among US adults (35+) across states, years, and demographic subgroups.
 
+![Teaser Image](README_figures/Teaser_Image.png)
+
 **Group member:** Lechen Shen; Songlin Shang; Ruixing Lu; Jacob Sun; Chenzhi Zhao.
 
 **Dataset:** [Stroke Mortality Data Among US Adults (35+) by State/Territory and County](https://catalog.data.gov/dataset/stroke-mortality-data-among-us-adults-35-by-state-territory-and-county-2019-2021)
