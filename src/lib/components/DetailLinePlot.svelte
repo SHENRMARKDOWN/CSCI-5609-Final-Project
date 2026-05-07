@@ -1121,9 +1121,9 @@ function getDirectLabelWeight(id: string) {
       $selectedVis3Mode === "overall"
         ? "Higher lines indicate higher stroke mortality per 100,000. The highlighted line is the official state-level rate."
         : $selectedVis3Mode === "county"
-          ? "The dashed gray line shows the state average for the selected age group. The newest or hovered county stays emphasized, while the other counties remain muted for context. Breaks in a line indicate missing yearly values."
+          ? "The dashed gray line shows the state average for the selected age group. The newest or hovered county stays emphasized, while the other counties remain muted for context. Breaks in a line indicate missing yearly values. Certain counties may be unavailable due to data suppression or missing values."
           : $selectedVis3Mode === "race"
-            ? "The dashed gray line shows the selected state's baseline for the current age group. The newest or hovered race subgroup stays emphasized, while the other race lines remain muted for context. Breaks in a line indicate missing yearly values."
+            ? "The dashed gray line shows the selected state's baseline for the current age group. The newest or hovered race subgroup stays emphasized, while the other race lines remain muted for context. Breaks in a line indicate missing yearly values. Certain race groups may be unavailable due to data suppression or missing values."
             : "The dashed gray line shows the selected state's baseline for the current age group. Solid colored lines show subgroup trends. Breaks in a line indicate missing yearly values.";
   
     $: directLabels = buildEndLabels(visibleSeries);

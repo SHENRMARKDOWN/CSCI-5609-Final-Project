@@ -1183,6 +1183,11 @@
               </a>
             </li>
             <li>
+              <a href="https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html" target="_blank">
+                U.S. Census Bureau. Cartographic Boundary Files - Shapefile
+              </a>
+            </li>
+            <li>
               <a href="https://www.who.int/news-room/fact-sheets/detail/stroke" target="_blank">
                 WHO — Stroke
               </a>
